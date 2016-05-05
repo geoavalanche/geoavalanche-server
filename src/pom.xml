@@ -17,6 +17,7 @@
 
   <properties>
     <geoserver.version>2.9-SNAPSHOT</geoserver.version>
+    <geotools.version>15-SNAPSHOT</geotools.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.resources.sourceEncoding>${project.build.sourceEncoding}</project.resources.sourceEncoding>
   </properties>

@@ -2,17 +2,69 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
+  
   <parent>
     <groupId>org.geoavalanche</groupId>
     <artifactId>geoavalanche-server</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
+  
   <groupId>org.geoavalanche</groupId>
   <artifactId>main</artifactId>
+  <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>main</name>
-  <url>http://maven.apache.org</url>
+  <name>GeoAvalanche Server</name>
+  
+  <url>http://geoavalanche.org</url>
+  
   <dependencies>
+    <dependency>
+      <groupId>org.geoserver.web</groupId>
+      <artifactId>gs-web-app</artifactId>
+      <version>${geoserver.version}</version>
+      <scope>runtime</scope>
+      <type>war</type>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver.web</groupId>
+      <artifactId>gs-web-wfs</artifactId>
+      <version>${geoserver.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver.web</groupId>
+      <artifactId>gs-web-wms</artifactId>
+      <version>${geoserver.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver.web</groupId>
+      <artifactId>gs-web-wcs</artifactId>
+      <version>${geoserver.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver.extension</groupId>
+      <artifactId>gs-wps-core</artifactId>
+      <version>${geoserver.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver.extension</groupId>
+      <artifactId>gs-web-wps</artifactId>
+      <version>${geoserver.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.jtds</groupId>
+      <artifactId>jtds</artifactId>
+      <version>1.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-postgis</artifactId>
+      <version>${geotools.version}</version>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -20,4 +72,75 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  
+  <build>
+
+    <!-- <resources>
+      <resource>
+          
+      </resource>
+    </resources> -->
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <overlays>
+            <overlay>
+              <groupId>org.geoserver.web</groupId>
+              <artifactId>gs-web-app</artifactId>
+                <excludes>
+                  <exclude>WEB-INF/lib/postgresql*jdbc*.jar</exclude>
+                  <exclude>WEB-INF/lib/gwc-*.jar</exclude>
+                  <exclude>WEB-INF/lib/*-gwc-*.jar</exclude>
+                </excludes>
+            </overlay>
+          </overlays>
+            <warName>geoavalanche-${project.version}</warName>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-maven-plugin</artifactId>
+        <version>9.2.11.v20150529</version>
+        <!-- <configuration>
+          <scanIntervalSeconds>2</scanIntervalSeconds>
+          <scanTargetPatterns>
+            <scanTargetPattern>
+              <directory>src/jetty</directory>
+              <excludes>
+                <exclude>geoserver_data</exclude>
+              </excludes>
+            </scanTargetPattern>
+          </scanTargetPatterns>
+          <webApp>
+            <overrideDescriptor>src/jetty/override-web.xml</overrideDescriptor>
+            <extraClasspath>src/jetty/database</extraClasspath>
+          </webApp>
+          <contextXml>src/jetty/context.xml</contextXml>
+        </configuration> -->
+        <dependencies>
+          <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.4-1201-jdbc41</version>
+          </dependency>
+          <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>3.4.1</version>
+          </dependency>
+          <dependency>
+            <groupId>commons-dbcp</groupId>
+            <artifactId>commons-dbcp</artifactId>
+            <version>1.4</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+
+  </build>
+
 </project>
