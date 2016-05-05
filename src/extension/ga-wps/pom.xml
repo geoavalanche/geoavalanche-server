@@ -4,15 +4,15 @@
   
   <parent>
     <groupId>org.geoavalanche</groupId>
-    <artifactId>geoavalanche-server</artifactId>
+    <artifactId>extension</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
   
-  <groupId>org.geoavalanche</groupId>
-  <artifactId>extension</artifactId>
+  <groupId>org.geoavalanche.extension</groupId>
+  <artifactId>ga-wps</artifactId>
   <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>extension</name>
+  <name>ga-wps</name>
   
   <url>http://geoavalanche.org</url>
   
@@ -26,7 +26,9 @@
   </dependencies>
 
   <modules>
-    <module>ga-wps</module>
+    <module>wps-crowd</module>
+    <module>wps-slope</module>
+    <module>wps-snowpack</module>
   </modules>
-  
+
 </project>

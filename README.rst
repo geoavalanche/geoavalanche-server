@@ -69,3 +69,91 @@ Add the packaging property to the mode *pom*:
 .. code-block:: xml
  
      <packaging>pom</packaging>
+
+ Add WPS modules
+ ---------------
+
+All the Web Processing Services by GeoAvalanche are developed under the artifact ga-wps according to what is doing in the GeoServer project.
+
+.. code-block:: console
+
+    cd extension
+    mvn -B archetype:generate \
+		-DartifactId=ga-wps \
+		-DgroupId=org.geoavalanche.extension \
+		-Dname="GeoAvalanche Web Processing Service parent" \
+		-DmoduleName=ga-wps \
+		-DmoduleDescription="GeoAvalanche WPS module"
+
+Add the packaging property to the mode *pom*:
+
+.. code-block:: xml
+ 
+     <packaging>pom</packaging>
+
+Remove the artifacts created by default from maven archetype:
+
+.. code-block:: console
+
+	cd ga-wps
+	rm -rf src
+
+Create the WPS GeoAvalanche crowdsourcing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    cd ga-wps
+    mvn -B archetype:generate \
+		-DartifactId=wps-crowd \
+		-DgroupId=org.geoavalanche.extension \
+		-Dname="GeoAvalanche Web Processing Service for crowdsourcing" \
+		-Dpackage=org.geoavalanche.wps.crowd \
+		-DmoduleName=wps-crowd \
+		-DmoduleDescription="GeoAvalanche WPS module for crowdsourcing"
+
+Add the packaging property to the mode *jar*:
+
+.. code-block:: xml
+ 
+    <packaging>jar</packaging>
+
+Create the WPS GeoAvalanche slope
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    cd ga-wps
+    mvn -B archetype:generate \
+		-DartifactId=wps-slope \
+		-DgroupId=org.geoavalanche.extension \
+		-Dname="GeoAvalanche Web Processing Service for slopes" \
+		-Dpackage=org.geoavalanche.wps.slope \
+		-DmoduleName=wps-slope \
+		-DmoduleDescription="GeoAvalanche WPS module for slopes"
+
+Add the packaging property to the mode *jar*:
+
+.. code-block:: xml
+ 
+    <packaging>jar</packaging>
+
+Create the WPS GeoAvalanche snowpack
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    cd ga-wps
+    mvn -B archetype:generate \
+		-DartifactId=wps-snowpack \
+		-DgroupId=org.geoavalanche.extension \
+		-Dname="GeoAvalanche Web Processing Service for snowpack" \
+		-Dpackage=org.geoavalanche.wps.snowpack \
+		-DmoduleName=wps-snowpack \
+		-DmoduleDescription="GeoAvalanche WPS module for snowpack"
+
+Add the packaging property to the mode *jar*:
+
+.. code-block:: xml
+ 
+    <packaging>jar</packaging>
