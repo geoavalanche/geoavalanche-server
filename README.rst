@@ -34,7 +34,7 @@ Remove the artifacts created by default from maven archetype:
 .. code-block:: console
 
 	cd src
-    rm -rf main test
+	rm -rf main test
 
 Generate the Extension module:
 
@@ -178,3 +178,39 @@ Add the packaging property to the mode *jar*:
 .. code-block:: xml
  
     <packaging>jar</packaging>
+
+Add modules to the build
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Add the following dependencies to the pom of **main** artifact:
+
+.. code-block:: console
+
+    <!-- GEOAVALANCHE -->
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-crowd</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-slope</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-aspect</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-snowpack</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
+
+How to build
+------------
+
+.. code-block:: console
+
+    mvn clean install
