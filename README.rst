@@ -184,7 +184,7 @@ Add modules to the build
 
 Add the following dependencies to the pom of **main** artifact:
 
-.. code-block:: console
+.. code-block:: xml
 
     <!-- GEOAVALANCHE -->
     <dependency>
