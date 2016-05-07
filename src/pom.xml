@@ -16,6 +16,7 @@
   <url>http://geoavalanche.org</url>
 
   <properties>
+    <geoavalanche.version>${project.version}</geoavalanche.version>
     <geoserver.version>2.9-SNAPSHOT</geoserver.version>
     <geotools.version>15-SNAPSHOT</geotools.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -24,6 +25,8 @@
   
   <dependencyManagement>
     <dependencies>
+
+      <!-- GEOSERVER -->
       <dependency>
         <groupId>org.geoserver</groupId>
         <artifactId>geoserver</artifactId>

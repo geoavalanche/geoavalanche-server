@@ -18,6 +18,30 @@
   <url>http://geoavalanche.org</url>
   
   <dependencies>
+ 
+    <!-- GEOAVALANCHE -->
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-crowd</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-slope</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-aspect</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-snowpack</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
+    
+    <!-- GEOSERVER -->
     <dependency>
       <groupId>org.geoserver.web</groupId>
       <artifactId>gs-web-app</artifactId>
