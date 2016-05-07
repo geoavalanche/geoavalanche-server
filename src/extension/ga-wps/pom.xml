@@ -29,6 +29,7 @@
     <module>wps-crowd</module>
     <module>wps-slope</module>
     <module>wps-snowpack</module>
+    <module>wps-aspect</module>
   </modules>
 
 </project>

@@ -68,10 +68,10 @@ Add the packaging property to the mode *pom*:
 
 .. code-block:: xml
  
-     <packaging>pom</packaging>
+    <packaging>pom</packaging>
 
- Add WPS modules
- ---------------
+Add WPS modules
+---------------
 
 All the Web Processing Services by GeoAvalanche are developed under the artifact ga-wps according to what is doing in the GeoServer project.
 
@@ -98,8 +98,8 @@ Remove the artifacts created by default from maven archetype:
 	cd ga-wps
 	rm -rf src
 
-Create the WPS GeoAvalanche crowdsourcing
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Create the WPS GeoAvalanche crowdsourcing module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: console
 
@@ -118,8 +118,8 @@ Add the packaging property to the mode *jar*:
  
     <packaging>jar</packaging>
 
-Create the WPS GeoAvalanche slope
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Create the WPS GeoAvalanche slope module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: console
 
@@ -138,8 +138,29 @@ Add the packaging property to the mode *jar*:
  
     <packaging>jar</packaging>
 
-Create the WPS GeoAvalanche snowpack
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Create the WPS GeoAvalanche aspect module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    cd ga-wps
+    mvn -B archetype:generate \
+		-DartifactId=wps-aspect \
+		-DgroupId=org.geoavalanche.extension \
+		-Dname="GeoAvalanche Web Processing Service for aspects" \
+		-Dpackage=org.geoavalanche.wps.aspect \
+		-DmoduleName=wps-aspect \
+		-DmoduleDescription="GeoAvalanche WPS module for aspects"
+
+Add the packaging property to the mode *jar*:
+
+.. code-block:: xml
+ 
+    <packaging>jar</packaging>
+
+
+Create the WPS GeoAvalanche snowpack module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: console
 
