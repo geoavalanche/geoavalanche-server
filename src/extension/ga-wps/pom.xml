@@ -30,6 +30,7 @@
     <module>wps-slope</module>
     <module>wps-snowpack</module>
     <module>wps-aspect</module>
+    <module>wps-dangerindex</module>
   </modules>
 
 </project>
