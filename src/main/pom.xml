@@ -127,7 +127,7 @@
                 </excludes>
             </overlay>
           </overlays>
-            <warName>geoavalanche-${project.version}</warName>
+            <warName>geoavalanche</warName>
         </configuration>
       </plugin>
       <plugin>
