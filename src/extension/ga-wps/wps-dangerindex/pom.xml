@@ -6,12 +6,12 @@
   <parent>
     <groupId>org.geoavalanche.extension</groupId>
     <artifactId>ga-wps</artifactId>
-    <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.geoavalanche.extension</groupId>
   <artifactId>wps-dangerindex</artifactId>
+  <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>wps-dangerindex</name>
 
@@ -25,5 +25,5 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
+
 </project>
