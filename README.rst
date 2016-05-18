@@ -227,6 +227,11 @@ Add the following dependencies to the pom of **main** artifact:
       <artifactId>wps-snowpack</artifactId>
       <version>${geoavalanche.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-dangerindex</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
 
 How to build
 ------------
