@@ -179,6 +179,26 @@ Add the packaging property to the mode *jar*:
  
     <packaging>jar</packaging>
 
+Create the WPS GeoAvalanche dangerindex module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    cd ga-wps
+    mvn -B archetype:generate \
+		-DartifactId=wps-dangerindex \
+		-DgroupId=org.geoavalanche.extension \
+		-Dname="GeoAvalanche Web Processing Service for Danger" \
+		-Dpackage=org.geoavalanche.wps.dangerindex \
+		-DmoduleName=wps-dangerindex \
+		-DmoduleDescription="GeoAvalanche WPS module for Danger"
+
+Add the packaging property to the mode *jar*:
+
+.. code-block:: xml
+ 
+    <packaging>jar</packaging>
+
 Add modules to the build
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
