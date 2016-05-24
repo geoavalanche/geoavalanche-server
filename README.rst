@@ -239,3 +239,67 @@ How to build
 .. code-block:: console
 
     mvn clean install
+
+How to test
+-----------
+
+Docker
+^^^^^^
+
+Install the `Docker Toolbox`_ 
+
+.. _Docker Toolbox: https://www.docker.com/products/docker-toolbox
+
+Set the shell environment:
+
+.. code-block:: console
+
+    eval $(docker-machine env default)
+
+Start the docker machine:
+
+.. code-block:: console
+
+    docker-machine start default
+
+Build the container image from where you have placed the dockerfile
+
+.. code-block:: console
+
+	docker build -t geoavalanche/geoavalanche-server .
+
+Run the container with the built image:
+
+.. code-block:: console
+
+    docker run -p 8080:8080 -d geoavalanche/geoavalanche-server
+
+Open your browser at this `local address`_ :
+
+.. _local address: http://DOCKER_HOST_IP:8080/geoavalanche
+
+where the value of variable depends from your docker configuration:
+
+.. code-block:: bash
+
+    DOCKER_HOST_IP=$(docker-machine ip)
+
+How to update the container with new artifact
+"""""""""""""""""""""""""""""""""""""""""""""
+
+Stop the running container:
+
+.. code-block:: console
+
+    docker ps
+    docker stop $CONTAINER_ID
+
+where *CONTAINER_ID* is the identifier of the geoavalanche running container
+
+Remove the container:
+
+.. code-block:: console
+
+    docker rm $CONTAINER_ID
+
+Build the container again.
