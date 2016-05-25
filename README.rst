@@ -272,7 +272,7 @@ Run the container with the built image:
 
 .. code-block:: console
 
-    docker run -p 8080:8080 -d geoavalanche/geoavalanche-server
+    docker run -p 8080:8080,8888:8888 -d geoavalanche/geoavalanche-server
 
 Open your browser at this `local address`_ :
 
