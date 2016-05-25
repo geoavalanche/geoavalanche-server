@@ -40,7 +40,6 @@ public class DangerIndex extends StaticMethodsProcessFactory<DangerIndex> {
 
     public DangerIndex() {
         super(Text.text("GeoAvalanche"), "geoavalanche", DangerIndex.class);
-        LOG.info("PolygonTools()");
     }
     
     @DescribeProcess(title = "DangerIndex", description = "DangerIndex")
