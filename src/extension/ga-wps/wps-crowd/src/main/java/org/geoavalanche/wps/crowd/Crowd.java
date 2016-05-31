@@ -109,14 +109,10 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         UshahidiApi ushahidi = new UshahidiApi("http://geoavalanche.org/incident");        
         IncidentsTask incidentstask = ushahidi.factory.createIncidentsTask();
         incidentstask.setLimit(100);
+        incidentstask.setOrderField("incidentid");
         List<Incidents> incidents = incidentstask.all();
         if (incidents==null) {
             incidents = new ArrayList();
-            Incidents i = new Incidents();
-            i.incident = new Incident();
-            i.incident.setLatitude(42.473304);
-            i.incident.setLongitude(12.997361);
-            incidents.add(i);
         }
         return incidents;
     }
