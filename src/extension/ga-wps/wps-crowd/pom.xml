@@ -36,7 +36,13 @@
             <artifactId>gt-process-geometry</artifactId>
             <version>${geotools.version}</version>
         </dependency> 
-                                
+
+        <dependency>
+            <groupId>com.ushahidi</groupId>
+            <artifactId>ushahidi_sdk</artifactId>
+            <version>1.1.1</version>
+        </dependency> 
+                                                                        
     </dependencies>
 
 </project>
