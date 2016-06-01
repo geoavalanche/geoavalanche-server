@@ -30,6 +30,9 @@ import org.opengis.feature.simple.SimpleFeatureType;
 
 public class Buffer extends StaticMethodsProcessFactory<Buffer> {
 
+    public static final String DISTANCE = "5000";
+    public static final String QUANDRANTSEGMENT = "100";
+    public static final String CAP_ROUND = ""+BufferParameters.CAP_ROUND;
     private static final Logger LOG = Logger.getLogger(Buffer.class.getName());
 
     public Buffer() {
@@ -39,10 +42,10 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
     @DescribeProcess(title = "Buffer", description = "Buffer")
     @DescribeResult(description = "FeatureCollection")
     public static SimpleFeatureCollection Buffer(
-            @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection,
-            @DescribeParameter(name = "distance", description = "distance") String distance,
-            @DescribeParameter(name = "quadrantSegments", description = "quadrantSegments") String quadrantSegments,
-            @DescribeParameter(name = "capStyle", description = "capStyle") String capStyle
+            @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection", min=1, max=1) SimpleFeatureCollection featureCollection,
+            @DescribeParameter(name = "distance", description = "distance", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#DISTANCE") String distance,
+            @DescribeParameter(name = "quadrantSegments", description = "quadrantSegments", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#QUANDRANTSEGMENT") String quadrantSegments,
+            @DescribeParameter(name = "capStyle", description = "capStyle", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#CAP_ROUND") String capStyle
             ) throws Exception {
         
         List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
@@ -57,8 +60,7 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
                 for (int x = 1; x < theGeometry.getCoordinates().length; x++) {
                     Coordinate[] points = new Coordinate[]{theGeometry.getCoordinates()[x - 1], theGeometry.getCoordinates()[x]};
                     LineString newLineString = theGeometryFactory.createLineString(points);
-                    //Polygon thePolygon = (Polygon) geoBuffer(newLineString, distance, quadrantSegments, capStyle);
-                    Polygon thePolygon = (Polygon) newLineString.buffer(Double.valueOf(distance), Integer.valueOf(quadrantSegments), BufferParameters.CAP_ROUND);
+                    Polygon thePolygon = (Polygon) newLineString.buffer(Double.valueOf(distance), Integer.valueOf(quadrantSegments), Integer.valueOf(capStyle));
                     MultiPolygon theMultiPolygon = new MultiPolygon(new Polygon[] {thePolygon}, thePolygon.getFactory());
                     fb.reset();
                     for (Property p : feature.getProperties()) {
@@ -72,7 +74,7 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
             } else if (feature.getDefaultGeometry() instanceof Point) {
                 Point theGeometry = (Point) feature.getDefaultGeometry();
                 //Polygon thePolygon = (Polygon) geoBuffer(theGeometry, distance, quadrantSegments, capStyle);
-                Polygon thePolygon = (Polygon) theGeometry.buffer(Double.valueOf(distance), Integer.valueOf(quadrantSegments), BufferParameters.CAP_ROUND);
+                Polygon thePolygon = (Polygon) theGeometry.buffer(Double.valueOf(distance), Integer.valueOf(quadrantSegments), Integer.valueOf(capStyle));
                 MultiPolygon theMultiPolygon = new MultiPolygon(new Polygon[] {thePolygon}, thePolygon.getFactory());
                 fb.reset();
                 for (Property p : feature.getProperties()) {
