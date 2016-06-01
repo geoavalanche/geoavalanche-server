@@ -30,9 +30,9 @@ import org.opengis.feature.simple.SimpleFeatureType;
 
 public class Buffer extends StaticMethodsProcessFactory<Buffer> {
 
-    public static final Double DISTANCE = new Double(5000);
-    public static final Integer QUANDRANTSEGMENT = 100;
-    public static final Integer CAP_STYLE = BufferParameters.CAP_ROUND;
+    public static final double DISTANCE = 5000;
+    public static final int QUANDRANTSEGMENT = 100;
+    public static final int CAP_STYLE = BufferParameters.CAP_ROUND;
     private static final Logger LOG = Logger.getLogger(Buffer.class.getName());
 
     public Buffer() {
@@ -43,9 +43,9 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
     @DescribeResult(description = "FeatureCollection")
     public static SimpleFeatureCollection Buffer(
             @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection", min=1, max=1) SimpleFeatureCollection featureCollection,
-            @DescribeParameter(name = "distance", description = "distance", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#DISTANCE") Double distance,
-            @DescribeParameter(name = "quadrantSegments", description = "quadrantSegments", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#QUANDRANTSEGMENT") Integer quadrantSegments,
-            @DescribeParameter(name = "capStyle", description = "capStyle", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#CAP_STYLE") Integer capStyle
+            @DescribeParameter(name = "distance", description = "distance", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#DISTANCE") double distance,
+            @DescribeParameter(name = "quadrantSegments", description = "quadrantSegments", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#QUANDRANTSEGMENT") int quadrantSegments,
+            @DescribeParameter(name = "capStyle", description = "capStyle", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#CAP_STYLE") int capStyle
             ) throws Exception {
         
         List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
