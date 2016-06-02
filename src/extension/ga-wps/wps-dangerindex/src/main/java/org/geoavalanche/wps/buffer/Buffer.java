@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiLineString;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
@@ -48,41 +49,24 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
             @DescribeParameter(name = "capStyle", description = "capStyle", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#CAP_STYLE") int capStyle
             ) throws Exception {
         
-        List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
+        List<SimpleFeature> featuresList = new ArrayList();
         SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
         
         SimpleFeatureIterator itr = featureCollection.features();
         while (itr.hasNext()) {
             SimpleFeature feature = itr.next();
-            if (feature.getDefaultGeometry() instanceof LineString) {
-                LineString theGeometry = (LineString) feature.getDefaultGeometry();
-                GeometryFactory theGeometryFactory = new GeometryFactory(theGeometry.getPrecisionModel(), theGeometry.getSRID());
-                for (int x = 1; x < theGeometry.getCoordinates().length; x++) {
-                    Coordinate[] points = new Coordinate[]{theGeometry.getCoordinates()[x - 1], theGeometry.getCoordinates()[x]};
-                    LineString newLineString = theGeometryFactory.createLineString(points);
-                    Polygon thePolygon = (Polygon) newLineString.buffer(distance, quadrantSegments, capStyle);
-                    MultiPolygon theMultiPolygon = new MultiPolygon(new Polygon[] {thePolygon}, thePolygon.getFactory());
-                    fb.reset();
-                    for (Property p : feature.getProperties()) {
-                        if (!p.getName().getLocalPart().equalsIgnoreCase("geometry")) {
-                            fb.set(p.getName().getLocalPart(), p.getValue());                            
-                        }
-                    }
-                    fb.set("the_geom", theMultiPolygon);
-                    featuresList.add(fb.buildFeature(feature.getID() + "." + x));
+            if (feature.getDefaultGeometry() instanceof MultiLineString) {
+                MultiLineString theGeometry = (MultiLineString)feature.getDefaultGeometry();
+                for (int i=0; i<theGeometry.getNumGeometries(); i++) {
+                    featuresList.addAll(buffer(fb, feature, (LineString)theGeometry.getGeometryN(i), distance, quadrantSegments, capStyle));
                 }
+                
+            } else if (feature.getDefaultGeometry() instanceof LineString) {
+                featuresList.addAll(buffer(fb, feature, (LineString) feature.getDefaultGeometry(), distance, quadrantSegments, capStyle));
+
             } else if (feature.getDefaultGeometry() instanceof Point) {
-                Point theGeometry = (Point) feature.getDefaultGeometry();
-                Polygon thePolygon = (Polygon) theGeometry.buffer(distance, quadrantSegments, capStyle);
-                MultiPolygon theMultiPolygon = new MultiPolygon(new Polygon[] {thePolygon}, thePolygon.getFactory());
-                fb.reset();
-                for (Property p : feature.getProperties()) {
-                    if (!p.getName().getLocalPart().equalsIgnoreCase("geometry")) {
-                        fb.set(p.getName().getLocalPart(), p.getValue());                            
-                    }
-                }
-                fb.set("the_geom", theMultiPolygon);
-                featuresList.add(fb.buildFeature(feature.getID()));
+                featuresList.add(buffer(fb, feature, (Point) feature.getDefaultGeometry(), distance, quadrantSegments, capStyle));
+
             } else {
                 featuresList.add(feature);
             }
@@ -93,6 +77,39 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
         return ret;
     }
 
+    static List<SimpleFeature> buffer(SimpleFeatureBuilder fb, SimpleFeature feature, LineString theGeometry, double distance, int quadrantSegments, int capStyle) {
+        List<SimpleFeature> featuresList = new ArrayList();
+        GeometryFactory theGeometryFactory = new GeometryFactory(theGeometry.getPrecisionModel(), theGeometry.getSRID());
+        for (int x = 1; x < theGeometry.getCoordinates().length; x++) {
+            Coordinate[] points = new Coordinate[]{theGeometry.getCoordinates()[x - 1], theGeometry.getCoordinates()[x]};
+            LineString newLineString = theGeometryFactory.createLineString(points);
+            Polygon thePolygon = (Polygon) newLineString.buffer(distance, quadrantSegments, capStyle);
+            MultiPolygon theMultiPolygon = new MultiPolygon(new Polygon[] {thePolygon}, thePolygon.getFactory());
+            fb.reset();
+            for (Property p : feature.getProperties()) {
+                if (!p.getName().getLocalPart().equalsIgnoreCase("geometry")) {
+                    fb.set(p.getName().getLocalPart(), p.getValue());                            
+                }
+            }
+            fb.set("the_geom", theMultiPolygon);
+            featuresList.add(fb.buildFeature(feature.getID() + "." + x));
+        }
+        return featuresList;
+    }
+
+    static SimpleFeature buffer(SimpleFeatureBuilder fb, SimpleFeature feature, Point theGeometry, double distance, int quadrantSegments, int capStyle) {
+        Polygon thePolygon = (Polygon) theGeometry.buffer(distance, quadrantSegments, capStyle);
+        MultiPolygon theMultiPolygon = new MultiPolygon(new Polygon[] {thePolygon}, thePolygon.getFactory());
+        fb.reset();
+        for (Property p : feature.getProperties()) {
+            if (!p.getName().getLocalPart().equalsIgnoreCase("geometry")) {
+                fb.set(p.getName().getLocalPart(), p.getValue());                            
+            }
+        }
+        fb.set("the_geom", theMultiPolygon);
+        return fb.buildFeature(feature.getID());
+    }
+    
     static SimpleFeatureBuilder getSimpleFeatureBuilder(SimpleFeatureCollection featureCollection) {
         Map<String, Class> theProperties = new HashMap();
         SimpleFeatureIterator itr = featureCollection.features();
