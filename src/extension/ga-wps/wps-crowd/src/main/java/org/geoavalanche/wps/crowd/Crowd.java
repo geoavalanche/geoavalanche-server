@@ -21,6 +21,7 @@ import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
@@ -64,16 +65,7 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
                 theGeometry = (Geometry)feature.getAttribute("geometry");
             }
             if (theGeometry != null) {
-                GeometryFactory theGeometryFactory = new GeometryFactory(theGeometry.getPrecisionModel(), theGeometry.getSRID());            
-                int _incidents = 0;
-                for (Incidents entry: incidents) {
-                    Coordinate theCoordinate = transform("EPSG:4326", "EPSG:3857", entry.incident.getLongitude(), entry.incident.getLatitude());
-                    Point thePoint = theGeometryFactory.createPoint(theCoordinate);
-                    if (theGeometry.contains(thePoint)) {
-                        _incidents++;
-                    }
-                }
-                fb.set("incidents", _incidents);
+                fb.set("incidents", getNumIncidentsOfGeometry(incidents, theGeometry));
             } 
             featuresList.add(fb.buildFeature(feature.getID()));
         }
@@ -83,6 +75,23 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         return ret;
     }
 
+    static int getNumIncidentsOfGeometry(List<Incidents> incidents, Geometry theGeometry) throws Exception {
+        boolean lenient = true;
+        MathTransform transform = CRS.findMathTransform(CRS.decode("EPSG:3857"), CRS.decode("EPSG:4326"), lenient);
+        Geometry theGeometryWGS84 = JTS.transform(theGeometry, transform);
+        
+        GeometryFactory theGeometryFactory = new GeometryFactory(theGeometryWGS84.getPrecisionModel(), theGeometryWGS84.getSRID());            
+        int _incidents = 0;
+        for (Incidents entry: incidents) {
+            Coordinate theCoordinate = new Coordinate(entry.incident.getLongitude(), entry.incident.getLatitude());
+            Point thePoint = theGeometryFactory.createPoint(theCoordinate);
+            if (theGeometryWGS84.contains(thePoint)) {
+                _incidents++;
+            }
+        }        
+        return _incidents;
+    }
+    
     static SimpleFeatureBuilder getSimpleFeatureBuilder(SimpleFeatureCollection featureCollection) {
         Map<String, Class> theProperties = new HashMap();
         SimpleFeatureIterator itr = featureCollection.features();
@@ -115,41 +124,5 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
             incidents = new ArrayList();
         }
         return incidents;
-    }
-    
-    public static Coordinate transform(String from, String to, double longitude, double latitude) throws Exception {
-        double xy[] = {longitude, latitude};
-        Coordinate c = new Coordinate(longitude, latitude);
-        
-        if (from == null || to == null) {
-            return c;
-        }
-
-        if (from.compareToIgnoreCase("EPSG:4326") == 0) {
-            // E6 support
-            if (xy[0] > 181 || xy[0] < -181) {
-                xy[0] /= 1000000;
-            }
-            if (xy[1] > 91 || xy[1] < -91) {
-                xy[1] /= 1000000;
-            }
-        }
-
-        if (from.equals(to)) {
-            return c;
-        }
-
-        CoordinateReferenceSystem from_crs = CRS.decode(from);
-
-        CoordinateReferenceSystem to_crs = CRS.decode(to, true); //true=longitude first
-
-        MathTransform transform1 = CRS.findMathTransform(from_crs, to_crs, false);
-
-        DirectPosition2D from_point = new DirectPosition2D(xy[0], xy[1]);
-        DirectPosition2D to_point = new DirectPosition2D(0, 0);
-
-        transform1.transform(from_point, to_point);
-
-        return new Coordinate(to_point.x, to_point.y);
     }
 }
