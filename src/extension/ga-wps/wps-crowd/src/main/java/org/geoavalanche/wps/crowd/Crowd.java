@@ -38,6 +38,7 @@ import org.geotools.text.Text;
 import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 
 public class Crowd extends StaticMethodsProcessFactory<Crowd> {
@@ -55,9 +56,12 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
     @DescribeProcess(title = "Crowd", description = "Crowd")
     @DescribeResult(description = "FeatureCollection")
     public static SimpleFeatureCollection Crowd(
-            @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection
+            @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection,
+            @DescribeParameter(name = "sourceCRS", description = "sourceCRS", min=0, max=1) CoordinateReferenceSystem sourceCRS            
     ) throws Exception {
-                
+        if (sourceCRS == null) {
+            sourceCRS=CRS.decode("EPSG:3857");
+        }
         if (isAvailableMongodb==null) {
             isAvailableMongodb = isAvailableMongodb();
         }
@@ -82,9 +86,9 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
             }
             if (theGeometry != null) {
                 if (!isAvailableMongodb) {
-                    fb.set("incidents", getNumIncidentsOfGeometry(incidents, theGeometry));
+                    fb.set("incidents", getNumIncidentsOfGeometry(incidents, theGeometry, sourceCRS));
                 } else {
-                    fb.set("incidents", getNumIncidentsOfGeometry(theGeometry));
+                    fb.set("incidents", getNumIncidentsOfGeometry(theGeometry, sourceCRS));
                 }
             } 
             featuresList.add(fb.buildFeature(feature.getID()));
@@ -95,34 +99,40 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         return ret;
     }
 
-    static long getNumIncidentsOfGeometry(List<Incidents> incidents, Geometry theGeometry3857) throws Exception {
+    static long getNumIncidentsOfGeometry(List<Incidents> incidents, Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {
         boolean lenient = true;
-        MathTransform transform = CRS.findMathTransform(CRS.decode("EPSG:3857"), CRS.decode("EPSG:4326"), lenient);
-        Geometry theGeometryWGS84 = JTS.transform(theGeometry3857, transform);
+        Geometry theGeometry4326 = theGeometry;
+        if (sourceCRS!=CRS.decode("EPSG:4326")) {
+            MathTransform transform = CRS.findMathTransform(sourceCRS, CRS.decode("EPSG:4326"), lenient);
+            theGeometry4326 = JTS.transform(theGeometry, transform);
+        } 
         
-        GeometryFactory theGeometryFactory = new GeometryFactory(theGeometryWGS84.getPrecisionModel(), theGeometryWGS84.getSRID());            
+        GeometryFactory theGeometryFactory = new GeometryFactory(theGeometry4326.getPrecisionModel(), theGeometry4326.getSRID());            
         long _incidents = 0;
         for (Incidents entry: incidents) {
             Coordinate theCoordinate = new Coordinate(entry.incident.getLongitude(), entry.incident.getLatitude());
             Point thePoint = theGeometryFactory.createPoint(theCoordinate);
-            if (theGeometryWGS84.contains(thePoint)) {
+            if (theGeometry4326.contains(thePoint)) {
                 _incidents++;
             }
         }        
         return _incidents;
     }
 
-    static long getNumIncidentsOfGeometry(Geometry theGeometry3857) throws Exception {
+    static long getNumIncidentsOfGeometry(Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {
         long _incidents = 0;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         
-        boolean lenient = true;
-        MathTransform transform = CRS.findMathTransform(CRS.decode("EPSG:3857"), CRS.decode("EPSG:4326"), lenient);
-        Geometry theGeometryWGS84 = JTS.transform(theGeometry3857, transform);
+        Geometry theGeometry4326 = theGeometry;
+        if (sourceCRS!=CRS.decode("EPSG:4326")) {
+            boolean lenient = true;
+            MathTransform transform = CRS.findMathTransform(CRS.decode("EPSG:3857"), CRS.decode("EPSG:4326"), lenient);
+            theGeometry4326 = JTS.transform(theGeometry, transform);
+        }
 
         GeometryJSON gjson = new GeometryJSON();
         StringWriter writer = new StringWriter();
-        gjson.write(theGeometryWGS84, writer);
+        gjson.write(theGeometry4326, writer);
         String json = writer.toString();
         
         MongoClient mongoClient = new MongoClient(new ServerAddress(mongoip, mongoport));

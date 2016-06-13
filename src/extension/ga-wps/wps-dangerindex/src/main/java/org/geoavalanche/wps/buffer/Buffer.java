@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
@@ -20,14 +21,18 @@ import org.geotools.data.simple.SimpleFeatureIterator;
 
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.process.factory.StaticMethodsProcessFactory;
+import org.geotools.referencing.CRS;
 import org.geotools.text.Text;
 import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
 
 public class Buffer extends StaticMethodsProcessFactory<Buffer> {
 
@@ -46,7 +51,9 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
             @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection", min=1, max=1) SimpleFeatureCollection featureCollection,
             @DescribeParameter(name = "distance", description = "distance", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#DISTANCE") double distance,
             @DescribeParameter(name = "quadrantSegments", description = "quadrantSegments", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#QUANDRANTSEGMENT") int quadrantSegments,
-            @DescribeParameter(name = "capStyle", description = "capStyle", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#CAP_STYLE") int capStyle
+            @DescribeParameter(name = "capStyle", description = "capStyle", min=0, max=1, defaultValue = "org.geoavalanche.wps.buffer.Buffer#CAP_STYLE") int capStyle,
+            @DescribeParameter(name = "sourceCRS", description = "sourceCRS", min=0, max=1) CoordinateReferenceSystem sourceCRS,
+            @DescribeParameter(name = "targetCRS", description = "targetCRS", min=0, max=1) CoordinateReferenceSystem targetCRS
             ) throws Exception {
         
         List<SimpleFeature> featuresList = new ArrayList();
@@ -72,11 +79,23 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
             }
         }
 
-        SimpleFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
-        LOG.info("return=" + ret);
+        SimpleFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), transform(featuresList,sourceCRS,targetCRS));
+        LOG.info("nrec = " + ret.size());
         return ret;
     }
 
+    static List<SimpleFeature> transform(List<SimpleFeature> featuresList, CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS) throws Exception {
+        if (sourceCRS == null | targetCRS == null | sourceCRS==targetCRS) return featuresList;
+        List<SimpleFeature> ret = new ArrayList();
+        boolean lenient = true;
+        MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, lenient);
+        for (SimpleFeature feature : featuresList) {
+            feature.setDefaultGeometry(JTS.transform((Geometry)feature.getDefaultGeometry(), transform));
+            ret.add(feature);
+        }
+        return ret;
+    }
+    
     static List<SimpleFeature> buffer(SimpleFeatureBuilder fb, SimpleFeature feature, LineString theGeometry, double distance, int quadrantSegments, int capStyle) {
         List<SimpleFeature> featuresList = new ArrayList();
         GeometryFactory theGeometryFactory = new GeometryFactory(theGeometry.getPrecisionModel(), theGeometry.getSRID());
