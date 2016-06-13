@@ -126,7 +126,7 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         Geometry theGeometry4326 = theGeometry;
         if (sourceCRS!=CRS.decode("EPSG:4326")) {
             boolean lenient = true;
-            MathTransform transform = CRS.findMathTransform(CRS.decode("EPSG:3857"), CRS.decode("EPSG:4326"), lenient);
+            MathTransform transform = CRS.findMathTransform(sourceCRS, CRS.decode("EPSG:4326"), lenient);
             theGeometry4326 = JTS.transform(theGeometry, transform);
         }
 
