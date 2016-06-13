@@ -1,7 +1,7 @@
 package org.geoavalanche.wps.crowd;
 
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import static com.mongodb.client.model.Filters.geoWithin;
@@ -43,6 +43,10 @@ import org.opengis.referencing.operation.MathTransform;
 public class Crowd extends StaticMethodsProcessFactory<Crowd> {
 
     private static final Logger LOG = Logger.getLogger(Crowd.class.getName());
+    private static final String mongoip = "localhost"; 
+    private static final int mongoport = 27017; 
+    private static final String mongodb = "geoavalanche"; 
+    private static Boolean isAvailableMongodb = null; 
 
     public Crowd() {
         super(Text.text("GeoAvalanche"), "geoavalanche", Crowd.class);
@@ -53,8 +57,14 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
     public static SimpleFeatureCollection Crowd(
             @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection
     ) throws Exception {
-        
-        List<Incidents> incidents = getAllIncidents();
+                
+        if (isAvailableMongodb==null) {
+            isAvailableMongodb = isAvailableMongodb();
+        }
+        List<Incidents> incidents = null;
+        if (!isAvailableMongodb) {
+            incidents = getAllIncidents();
+        }
         
         List<SimpleFeature> featuresList = new ArrayList();
         SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
@@ -71,17 +81,17 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
                 theGeometry = (Geometry)feature.getAttribute("geometry");
             }
             if (theGeometry != null) {
-                try {
-                    fb.set("incidents", getNumIncidentsOfGeometry(theGeometry));
-                } catch (Exception e) {
+                if (!isAvailableMongodb) {
                     fb.set("incidents", getNumIncidentsOfGeometry(incidents, theGeometry));
+                } else {
+                    fb.set("incidents", getNumIncidentsOfGeometry(theGeometry));
                 }
             } 
             featuresList.add(fb.buildFeature(feature.getID()));
         }
         
         ListFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
-        LOG.info("return=" + ret);
+        LOG.info("nrec = " + ret.size());
         return ret;
     }
 
@@ -115,9 +125,8 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         gjson.write(theGeometryWGS84, writer);
         String json = writer.toString();
         
-        String mongourl = "mongodb://localhost:27017";
-        MongoClient mongoClient = new MongoClient(new MongoClientURI(mongourl));
-        MongoDatabase db = mongoClient.getDatabase("test");
+        MongoClient mongoClient = new MongoClient(new ServerAddress(mongoip, mongoport));
+        MongoDatabase db = mongoClient.getDatabase(mongodb);
         org.bson.Document theDocument = org.bson.Document.parse(json);        
         MongoCursor<org.bson.Document> cur = db.getCollection("incidents").find(geoWithin("loc", theDocument)).iterator();
         while(cur.hasNext()) {
@@ -128,6 +137,20 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         }
         mongoClient.close(); 
         return _incidents;
+    }
+    
+    static boolean isAvailableMongodb() {
+        MongoClient mongoClient = null;
+        try {
+            mongoClient = new MongoClient(new ServerAddress(mongoip, mongoport));
+            MongoDatabase db = mongoClient.getDatabase(mongodb);
+            long nrec = db.getCollection("incidents").count();
+            return nrec > 0;
+        } catch (Exception e) {
+            return false;
+        } finally {
+            mongoClient.close();
+        }
     }
     
     static SimpleFeatureBuilder getSimpleFeatureBuilder(SimpleFeatureCollection featureCollection) {
