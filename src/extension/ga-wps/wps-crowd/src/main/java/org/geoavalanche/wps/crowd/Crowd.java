@@ -13,6 +13,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 import java.io.StringWriter;
+import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -44,8 +45,8 @@ import org.opengis.referencing.operation.MathTransform;
 public class Crowd extends StaticMethodsProcessFactory<Crowd> {
 
     private static final Logger LOG = Logger.getLogger(Crowd.class.getName());
-    private static final String mongoip = "localhost"; 
-    private static final int mongoport = 27017; 
+    private static String mongoip = "localhost"; 
+    private static int mongoport = 27017; 
     private static final String mongodb = "geoavalanche"; 
     private static Boolean isAvailableMongodb = null; 
 
@@ -59,12 +60,29 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
             @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection,
             @DescribeParameter(name = "sourceCRS", description = "sourceCRS", min=0, max=1) CoordinateReferenceSystem sourceCRS            
     ) throws Exception {
+        Map<String, String> env = System.getenv();
+        for (String envName : env.keySet()) {
+            LOG.info(envName+"="+env.get(envName));
+        }
+
+        try {
+            mongoip=System.getenv().get("MONGOIP");
+        } catch (Exception e) {
+            LOG.severe(e.toString());
+        }
+        try {            
+            mongoport=Integer.parseInt(System.getenv().get("MONGOPORT"));
+        } catch (Exception e) {
+            LOG.severe(e.toString());
+        }
+        
         if (sourceCRS == null) {
             sourceCRS=CRS.decode("EPSG:3857");
         }
         if (isAvailableMongodb==null) {
             isAvailableMongodb = isAvailableMongodb();
         }
+        LOG.info("isAvailableMongodb="+isAvailableMongodb);
         List<Incidents> incidents = null;
         if (!isAvailableMongodb) {
             incidents = getAllIncidents();
@@ -157,6 +175,7 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
             long nrec = db.getCollection("incidents").count();
             return nrec > 0;
         } catch (Exception e) {
+            LOG.severe(e.toString());
             return false;
         } finally {
             mongoClient.close();
@@ -194,6 +213,7 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         if (incidents==null) {
             incidents = new ArrayList();
         }
+        LOG.info("getAllIncidents() nrec="+incidents.size());
         return incidents;
     }
 }

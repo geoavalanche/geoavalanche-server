@@ -28,5 +28,8 @@ WORKDIR ${CATALINA_HOME}
 ADD ./src/main/target/geoavalanche.war ${CATALINA_HOME}/webapps
 CMD ["catalina.sh", "run"]
 
+ENV MONGOIP="localhost"
+ENV MONGOPORT="27017"
+
 # Expose the port for debugging
 EXPOSE 8888
