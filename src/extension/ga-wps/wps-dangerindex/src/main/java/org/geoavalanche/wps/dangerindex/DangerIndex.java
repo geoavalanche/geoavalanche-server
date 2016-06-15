@@ -60,7 +60,7 @@ public class DangerIndex extends StaticMethodsProcessFactory<DangerIndex> {
         }
 
         SimpleFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
-        LOG.info("return=" + ret);
+        LOG.info("nrec = " + ret.size());
         return ret;
     }
 
