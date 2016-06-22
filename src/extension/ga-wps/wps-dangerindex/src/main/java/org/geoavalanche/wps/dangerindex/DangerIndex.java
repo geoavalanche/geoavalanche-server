@@ -40,18 +40,18 @@ public class DangerIndex extends StaticMethodsProcessFactory<DangerIndex> {
 
         SimpleFeatureIterator itr = featureCollection.features();
         while (itr.hasNext()) {
-            int incidents = 0;
+            long[] incidents = {0,0,0,0};
             SimpleFeature feature = itr.next();
             fb.reset();
             for (Property p : feature.getProperties()) {
                 fb.set(p.getName().getLocalPart(), p.getValue());
                 if (p.getName().getLocalPart().equalsIgnoreCase("incidents")) {
-                    incidents = Integer.valueOf(p.getValue().toString());
+                    incidents = (long[])p.getValue();
                 }
             }
-            if (incidents == 1) {
+            if (incidents[0] == 1) {
                 fb.set("dangerindex", "1");
-            } else if (incidents > 1) {
+            } else if (incidents[0] > 1) {
                 fb.set("dangerindex", "2");
             } else {
                 fb.set("dangerindex", "0");

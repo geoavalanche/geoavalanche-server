@@ -16,6 +16,7 @@ import java.io.StringWriter;
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
@@ -117,7 +118,7 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         return ret;
     }
 
-    static long getNumIncidentsOfGeometry(List<Incidents> incidents, Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {
+    static long[] getNumIncidentsOfGeometry(List<Incidents> incidents, Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {
         boolean lenient = true;
         Geometry theGeometry4326 = theGeometry;
         if (sourceCRS!=CRS.decode("EPSG:4326")) {
@@ -127,18 +128,35 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         
         GeometryFactory theGeometryFactory = new GeometryFactory(theGeometry4326.getPrecisionModel(), theGeometry4326.getSRID());            
         long _incidents = 0;
+        long _incidentsInLastWeek = 0;
+        long _incidentsInLastMonth = 0;
+        long _incidentsInLastYear = 0;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         for (Incidents entry: incidents) {
             Coordinate theCoordinate = new Coordinate(entry.incident.getLongitude(), entry.incident.getLatitude());
             Point thePoint = theGeometryFactory.createPoint(theCoordinate);
             if (theGeometry4326.contains(thePoint)) {
+                if (isIncidentInThisWeek(entry.incident.getDate())) {
+                    _incidentsInLastWeek++;
+                }
+                if (isIncidentInThisMonth(entry.incident.getDate())) {
+                    _incidentsInLastMonth++;
+                }
+                if (isIncidentInThisYear(entry.incident.getDate())) {
+                    _incidentsInLastYear++;
+                }                
                 _incidents++;
             }
         }        
-        return _incidents;
+        long[] ret = {_incidents, _incidentsInLastYear, _incidentsInLastMonth, _incidentsInLastWeek};
+        return ret;        
     }
 
-    static long getNumIncidentsOfGeometry(Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {
+    static long[] getNumIncidentsOfGeometry(Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {
         long _incidents = 0;
+        long _incidentsInLastWeek = 0;
+        long _incidentsInLastMonth = 0;
+        long _incidentsInLastYear = 0;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         
         Geometry theGeometry4326 = theGeometry;
@@ -161,11 +179,39 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
             org.bson.Document doc = cur.next();
             org.bson.Document incident = (org.bson.Document)doc.get("incident");
             Date incidentdate = sdf.parse(incident.getString("incidentdate"));
+            if (isIncidentInThisWeek(incidentdate)) {
+                _incidentsInLastWeek++;
+            }
+            if (isIncidentInThisMonth(incidentdate)) {
+                _incidentsInLastMonth++;
+            }
+            if (isIncidentInThisYear(incidentdate)) {
+                _incidentsInLastYear++;
+            }
             _incidents++;
         }
-        mongoClient.close(); 
-        return _incidents;
+        mongoClient.close();
+        long[] ret = {_incidents, _incidentsInLastYear, _incidentsInLastMonth, _incidentsInLastWeek};
+        return ret;
     }
+
+    static boolean isIncidentInThisYear(java.util.Date incidentdate) {
+        Calendar _calendar = Calendar.getInstance();
+        _calendar.add(Calendar.YEAR, -1);
+        return (incidentdate.getTime() > _calendar.getTime().getTime());
+    }
+    
+    static boolean isIncidentInThisMonth(java.util.Date incidentdate) {
+        Calendar _calendar = Calendar.getInstance();
+        _calendar.add(Calendar.MONTH, -1);
+        return (incidentdate.getTime() > _calendar.getTime().getTime());
+    }
+    
+    static boolean isIncidentInThisWeek(java.util.Date incidentdate) {
+        Calendar _calendar = Calendar.getInstance();
+        _calendar.add(Calendar.DAY_OF_MONTH, -7);
+        return (incidentdate.getTime() > _calendar.getTime().getTime());
+    }    
     
     static boolean isAvailableMongodb() {
         MongoClient mongoClient = null;
