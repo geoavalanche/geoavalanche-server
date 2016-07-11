@@ -1,6 +1,7 @@
 package org.geoavalanche.wps.slope;
 
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryCollection;
 import es.unex.sextante.core.OutputFactory;
 import es.unex.sextante.core.OutputObjectsSet;
 import es.unex.sextante.core.ParametersSet;
@@ -12,13 +13,16 @@ import es.unex.sextante.morphometry.slope.SlopeAlgorithm;
 import es.unex.sextante.outputs.Output;
 import es.unex.sextante.outputs.OutputRasterLayer;
 import java.util.logging.Logger;
-import org.geotools.coverage.processing.operation.Crop;
 import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.processing.CoverageProcessor;
+import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.process.factory.StaticMethodsProcessFactory;
 import org.geotools.text.Text;
+import org.opengis.parameter.ParameterValueGroup;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
@@ -28,6 +32,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 public class Slope extends StaticMethodsProcessFactory<Slope> {
     
     private static final Logger LOG = Logger.getLogger(Slope.class.getName());
+    private static final CoverageProcessor PROCESSOR = CoverageProcessor.getInstance();
     
     /*
      * The output factory to use when calling geoalgorithms
@@ -46,9 +51,34 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
     @DescribeResult(description = "Raster result with slopes")
     public static GridCoverage2D Slope(
             @DescribeParameter(name = "dem", description = "DEM coverage") GridCoverage2D dem,
-            @DescribeParameter(name = "shape", description = "Shape") Geometry geom,
-            @DescribeParameter(name = "sourceCRS", description = "sourceCRS", min=0, max=1) CoordinateReferenceSystem sourceCRS            
+            @DescribeParameter(name = "shape", description = "Shape") Geometry geomShape        
     ) throws Exception {
+        
+        // get the bounds
+        CoordinateReferenceSystem crs;
+        if (geomShape.getUserData() instanceof CoordinateReferenceSystem) {
+            crs = (CoordinateReferenceSystem) geomShape.getUserData();
+        } else {
+            // assume the geometry is in the same crs
+            crs = dem.getCoordinateReferenceSystem();
+        }
+        GeneralEnvelope bounds = new GeneralEnvelope(new ReferencedEnvelope(geomShape.getEnvelopeInternal(), crs));
+
+        // force it to a collection if necessary
+        GeometryCollection roi;
+        if (!(geomShape instanceof GeometryCollection)) {
+            roi = geomShape.getFactory().createGeometryCollection(new Geometry[] { geomShape });
+        } else {
+            roi = (GeometryCollection) geomShape;
+        }
+        
+        // perform the crops
+        final ParameterValueGroup param = PROCESSOR.getOperation("CoverageCrop").getParameters();
+        param.parameter("Source").setValue(dem);
+        param.parameter("Envelope").setValue(bounds);
+        param.parameter("ROI").setValue(roi);
+        
+        GridCoverage2D cropCov = (GridCoverage2D) PROCESSOR.doOperation(param);
         
         /*
          * Initialize the library.
@@ -72,7 +102,7 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
          * wrapper class GTRasterLayer
          */
         GTRasterLayer raster = new GTRasterLayer();
-        raster.create(dem);
+        raster.create(cropCov);
         
         /*
          * Instantiate the SlopeAlgorithm class
