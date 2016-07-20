@@ -41,16 +41,41 @@
                 <version>${geoserver.version}</version>
                 <type>war</type>
             </dependency>
-            <dependency>
+            <!-- <dependency>
+                <groupId>org.geoserver</groupId>
+                <artifactId>gs-ows</artifactId>
+                <version>${geoserver.version}</version>
+            </dependency> -->
+            <!-- <dependency>
                 <groupId>org.geoserver.web</groupId>
                 <artifactId>gs-web-wfs</artifactId>
                 <version>${geoserver.version}</version>
+            </dependency> -->
+            <!-- <dependency>
+                <groupId>org.geoserver</groupId>
+                <artifactId>gs-wcs</artifactId>
+                <version>${geoserver.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.geoserver</groupId>
+                <artifactId>gs-wcs1_0</artifactId>
+                <version>${geoserver.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.geoserver</groupId>
+                <artifactId>gs-wcs1_1</artifactId>
+                <version>${geoserver.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.geoserver</groupId>
+                <artifactId>gs-wcs2_0</artifactId>
+                <version>${geoserver.version}</version>
+            </dependency> -->
+            <!-- <dependency>
                 <groupId>org.geoserver.extension</groupId>
                 <artifactId>gs-wps-core</artifactId>
                 <version>${geoserver.version}</version>
-            </dependency>
+            </dependency> -->
             <dependency>
                 <groupId>commons-cli</groupId>
                 <artifactId>commons-cli</artifactId>
@@ -94,25 +119,46 @@
 
     <repositories>
         <repository>
-            <id>opengeo</id>
-            <url>https://boundless.artifactoryonline.com/boundless/main</url>
+            <id>boundless</id>
+            <name>Boundless Maven Repository</name>
+            <url>https://repo.boundlessgeo.com/main/</url>
+            <!-- contains snapshot and release (including third-party-dependences)               -->
+            <!-- Restlet maven Repository (http://maven.restlet.org)                             -->
+            <!-- ucar (https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases) -->
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
         </repository>
+   
         <repository>
             <id>osgeo</id>
             <name>Open Source Geospatial Foundation Repository</name>
             <url>http://download.osgeo.org/webdav/geotools/</url>
+            <!-- release repository used by geotools (and third-party dependencies) -->
         </repository>
+
         <repository>
-            <id>mvnrepository</id>
-            <url>http://mvnrepository.com/artifact/</url>
+            <id>maven-restlet</id>
+            <name>Restlet Maven Repository</name>
+            <url>http://maven.restlet.org</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
+
         <repository>
+            <id>geosolutions</id>
+            <name>geosolutions repository</name>
+            <url>http://maven.geo-solutions.it/</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-            <id>boundless</id>
-            <name>Boundless Maven Repository</name>
-            <url>http://repo.boundlessgeo.com/main</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
         </repository>
     </repositories>
 

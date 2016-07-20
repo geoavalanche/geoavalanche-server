@@ -46,18 +46,22 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
     private static OutputFactory outputFactory = new GTOutputFactory();
     
     public Slope() {
-        super(Text.text("GeoAvalanche Slope"), "geoavalanche", Slope.class);
+        super(Text.text("GeoAvalanche"), "geoavalanche", Slope.class);
     }
     
     @DescribeProcess(title = "Slope", description = "Calculate slopes in a shape")
     @DescribeResult(description = "Raster result with slopes")
-    public static GridCoverage2D Slope(
+    public static GridCoverage2D Slope (
             @DescribeParameter(name = "dem", description = "DEM coverage") GridCoverage2D dem,
             @DescribeParameter(name = "shape", description = "Shape") Geometry geomShape        
     ) throws Exception {
         
+        // initialize the return
+        GridCoverage2D ret = null;
+
         // get the bounds
         CoordinateReferenceSystem crs;
+
         if (geomShape.getUserData() instanceof CoordinateReferenceSystem) {
             crs = (CoordinateReferenceSystem) geomShape.getUserData();
         } else {
@@ -79,8 +83,11 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
         param.parameter("Source").setValue(dem);
         param.parameter("Envelope").setValue(bounds);
         param.parameter("ROI").setValue(roi);
+
+        //return (GridCoverage2D) PROCESSOR.doOperation(param);
         
         GridCoverage2D cropCov = (GridCoverage2D) PROCESSOR.doOperation(param);
+        LOG.log(Level.ALL, "cropCov is {0}", cropCov.getPropertyNames().toString());
         
         /*
          * Initialize the library.
@@ -96,9 +103,10 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
         //Resulting values in radians
         int unit = SlopeAlgorithm.UNITS_RADIANS;
         
-        GridCoverage2D ret = null;
-        
         try {
+
+            LOG.log(Level.ALL, "Just a point to check if Sextante algorithms are {0}", Sextante.getAlgorithms().get("SEXTANTE").toString());            
+
             /*
              * To use this data we need to wrap it with an object
              * that implements the IRasterLayer, so SEXTANTE algorithms
@@ -108,6 +116,7 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
              */
             GTRasterLayer raster = new GTRasterLayer();
             raster.create(cropCov);
+            LOG.log(Level.ALL, "CRS for cropped raster is {0}",raster.getCRS().toString());
 
             /*
              * Instantiate the SlopeAlgorithm class
@@ -122,6 +131,7 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
             params.getParameter(SlopeAlgorithm.METHOD).setParameterValue(method);
             params.getParameter(SlopeAlgorithm.UNITS).setParameterValue(unit);
 
+            
             /*
              *  This algorithm will generate a new raster layer.
              * We can select "where" to put the result. To do this, we
@@ -133,10 +143,13 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
              * If we omit this, a FileOutputChannel will be used,
              * using a temporary filename.
              */
+             
             OutputObjectsSet outputs = alg.getOutputObjects();
             Output out = outputs.getOutput(SlopeAlgorithm.SLOPE);
+            LOG.log(Level.ALL, "outputObject of out is {0}", out.getOutputObject().toString());
 
             OutputRasterLayer resSlope = (OutputRasterLayer) out.getOutputObject();
+            LOG.log(Level.ALL, "outputObject of resSlope is {0}", resSlope.getOutputObject().toString());
 
             /*
              * Execute the algorithm. We use no task monitor,
@@ -155,8 +168,10 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
             alg.execute(null, outputFactory);
 
             IRasterLayer slope = (IRasterLayer) resSlope;
+            LOG.log(Level.ALL, "Slope is {0}", slope.toString());
 
             ret = new GridCoverage2D("slopes", (GridCoverage2D) slope);
+            LOG.log(Level.ALL, "ret is {0}", ret.getPropertyNames().toString());
             
         } catch (GeoAlgorithmExecutionException ex) {
             
