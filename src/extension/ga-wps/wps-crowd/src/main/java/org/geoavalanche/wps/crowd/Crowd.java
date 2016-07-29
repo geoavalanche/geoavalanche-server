@@ -69,12 +69,12 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         try {
             mongoip=System.getenv().get("MONGOIP");
         } catch (Exception e) {
-            LOG.severe(e.toString());
+            LOG.severe("env MONGOIP is not set");
         }
         try {            
             mongoport=Integer.parseInt(System.getenv().get("MONGOPORT"));
         } catch (Exception e) {
-            LOG.severe(e.toString());
+            LOG.severe("env MONGOPORT is not set");
         }
         
         if (sourceCRS == null) {
