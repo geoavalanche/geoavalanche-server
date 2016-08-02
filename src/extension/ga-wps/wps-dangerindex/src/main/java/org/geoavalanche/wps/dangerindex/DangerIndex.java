@@ -41,7 +41,7 @@ public class DangerIndex extends StaticMethodsProcessFactory<DangerIndex> {
 
         SimpleFeatureIterator itr = featureCollection.features();
         while (itr.hasNext()) {
-            String incidents = "0,0,0,0";
+            String incidents = null;
             SimpleFeature feature = itr.next();
             fb.reset();
             for (Property p : feature.getProperties()) {
@@ -50,12 +50,16 @@ public class DangerIndex extends StaticMethodsProcessFactory<DangerIndex> {
                     incidents = (String)p.getValue();
                 }
             }
-            StringTokenizer st = new StringTokenizer(incidents, ",");
-            int total = Integer.parseInt(st.nextToken());
-            if (total == 1) {
-                fb.set("dangerindex", "1");
-            } else if (total > 1) {
-                fb.set("dangerindex", "2");
+            if (incidents!=null) {
+                StringTokenizer st = new StringTokenizer(incidents, ",");
+                int total = Integer.parseInt(st.nextToken());
+                if (total == 1) {
+                    fb.set("dangerindex", "1");
+                } else if (total > 1) {
+                    fb.set("dangerindex", "2");
+                } else {
+                    fb.set("dangerindex", "0");
+                }
             } else {
                 fb.set("dangerindex", "0");
             }
