@@ -11,12 +11,24 @@ import es.unex.sextante.exceptions.GeoAlgorithmExecutionException;
 import org.geoserver.wps.sextante.GTOutputFactory;
 import org.geoserver.wps.sextante.GTRasterLayer;
 import es.unex.sextante.morphometry.slope.SlopeAlgorithm;
+import es.unex.sextante.outputs.FileOutputChannel;
 import es.unex.sextante.outputs.Output;
-import es.unex.sextante.outputs.OutputRasterLayer;
-import java.util.logging.Level;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Logger;
 import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.io.AbstractGridFormat;
+import org.geotools.coverage.grid.io.GridCoverage2DReader;
+import org.geotools.coverage.grid.io.GridFormatFinder;
+import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
 import org.geotools.coverage.processing.CoverageProcessor;
+import org.geotools.factory.Hints;
+import org.geotools.gce.geotiff.GeoTiffFormat;
+import org.geotools.gce.geotiff.GeoTiffWriteParams;
+import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.process.factory.DescribeParameter;
@@ -24,6 +36,8 @@ import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.process.factory.StaticMethodsProcessFactory;
 import org.geotools.text.Text;
+import org.opengis.coverage.grid.GridCoverageWriter;
+import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValueGroup;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
@@ -35,7 +49,8 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
     
     private static final Logger LOG = Logger.getLogger(Slope.class.getName());
     private static final CoverageProcessor PROCESSOR = CoverageProcessor.getInstance();
-    
+    public static final String GEOAVALANCHE_NAMESPACE = "geoavalanche";
+
     /*
      * The output factory to use when calling geoalgorithms
      * This tells the algorithm how to create new data objects (layers
@@ -44,9 +59,11 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
      * data objects (DataStore and GridCoverage)
      */
     private static OutputFactory outputFactory = new GTOutputFactory();
+    private static int method = SlopeAlgorithm.METHOD_ZEVENBERGEN;
+    private static int unit = SlopeAlgorithm.UNITS_DEGREES;
     
     public Slope() {
-        super(Text.text("GeoAvalanche"), "geoavalanche", Slope.class);
+        super(Text.text("GeoAvalanche"), GEOAVALANCHE_NAMESPACE, Slope.class);
     }
     
     @DescribeProcess(title = "Slope", description = "Calculate slopes in a shape")
@@ -54,10 +71,7 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
     public static GridCoverage2D Slope (
             @DescribeParameter(name = "dem", description = "DEM coverage") GridCoverage2D dem,
             @DescribeParameter(name = "shape", description = "Shape") Geometry geomShape        
-    ) throws Exception {
-        
-        // initialize the return
-        GridCoverage2D ret = null;
+    ) throws Exception {        
 
         // get the bounds
         CoordinateReferenceSystem crs;
@@ -86,8 +100,69 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
 
         //return (GridCoverage2D) PROCESSOR.doOperation(param);
         
-        GridCoverage2D cropCov = (GridCoverage2D) PROCESSOR.doOperation(param);
-        LOG.log(Level.ALL, "cropCov is {0}", cropCov.getPropertyNames().toString());
+        GridCoverage2D cropped = (GridCoverage2D) PROCESSOR.doOperation(param);
+        LOG.info("cropped Coverage="+cropped);
+        
+        //Write coverage to file /tmp/Slope/xxx.tiff
+        //final File writedir = new File(new StringBuilder("/tmp").append(File.separatorChar).append(Slope.class.getSimpleName()).toString());
+        Path writedir = Paths.get(new StringBuilder("/tmp").append(File.separatorChar).append(Slope.class.getSimpleName()).toString());
+        LOG.info("write directory="+writedir.toString());
+        //Care to create directory
+        //LOG.info("writedir is a Directory? "+writedir.isDirectory());
+        //LOG.info("writedir exists? "+writedir.isDirectory());
+        //if (!writedir.exists()) {
+        if (!Files.exists(writedir)) {
+        
+            //writedir.mkdirs();
+            try {
+                Files.createDirectories(writedir);
+            } catch (IOException e) {
+                //fail to create directory
+                e.printStackTrace();
+            }
+            
+        }
+        //final GeoTiffFormat format = new GeoTiffFormat();
+        
+        //final GeoTiffWriteParams wp = new GeoTiffWriteParams();
+        //wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+        //wp.setCompressionType("LZW");
+        //wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
+        //wp.setTiling(512, 512);
+        
+        //final ParameterValueGroup writerParams = format.getWriteParameters();
+        //writerParams.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString())
+        //            .setValue(wp);
+        
+        //String cropFileName = new StringBuilder(writedir.getAbsolutePath()).append(File.separatorChar).append(cropped.getName().toString()).append(".tiff").toString();
+        String cropFileName = new StringBuilder(writedir.toAbsolutePath().toString()).append(File.separatorChar).append(cropped.getName().toString()).append(".tiff").toString();
+        LOG.info("crop filename="+cropFileName);
+        final File writeFile = new File(cropFileName);
+        LOG.info("write file="+writeFile.toString());
+        //final GridCoverageWriter writer = format.getWriter(writeFile, new Hints(Hints.CRS, cropped.getCoordinateReferenceSystem()));
+        
+        //GeoTiffWriter writer = new GeoTiffWriter(cropped, new Hints(Hints.CRS, cropped.getCoordinateReferenceSystem()));
+//        try {
+//            writer.write(cropped, (GeneralParameterValue[]) writerParams.values().toArray(new GeneralParameterValue[1]));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                writer.dispose();
+//            } catch (Throwable e) {
+//               e.printStackTrace(); 
+//            }
+//        }
+        
+        writeToGeotiff(cropped, cropFileName);
+        /** Add a static coverage */
+        
+        //static file
+        //GridCoverage2D lCov = getLocalCoverage("result.tiff");
+        
+        //
+        GridCoverage2D lCov = getLocalCoverage(writeFile.getName());
+        LOG.info("lcov="+lCov);
         
         /*
          * Initialize the library.
@@ -96,93 +171,111 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
          * will be used
          */
         Sextante.initialize();
-        
-        //Zevenberger & Thorne method
-        int method = SlopeAlgorithm.METHOD_ZEVENBERGEN;
-        
-        //Resulting values in radians
-        int unit = SlopeAlgorithm.UNITS_RADIANS;
-        
-        try {
 
-            LOG.log(Level.ALL, "Just a point to check if Sextante algorithms are {0}", Sextante.getAlgorithms().get("SEXTANTE").toString());            
+        GTRasterLayer raster = new GTRasterLayer();
+        //raster.create(cropCov);
+        raster.create(lCov);
+        LOG.info("raster = "+raster);        
+        IRasterLayer slope = getSlope(raster,method,unit);   
+        GridCoverage2D ret = (GridCoverage2D)slope.getBaseDataObject();
+        LOG.info("ret="+ret);            
 
-            /*
-             * To use this data we need to wrap it with an object
-             * that implements the IRasterLayer, so SEXTANTE algorithms
-             * can access it.
-             * Since it is a Geotools object, we will use the Geotools
-             * wrapper class GTRasterLayer
-             */
-            GTRasterLayer raster = new GTRasterLayer();
-            raster.create(cropCov);
-            LOG.log(Level.ALL, "CRS for cropped raster is {0}",raster.getCRS().toString());
-
-            /*
-             * Instantiate the SlopeAlgorithm class
-             */
-            SlopeAlgorithm alg = new SlopeAlgorithm();
-
-            /*
-             * The first thing we have to do is to set up the input parameters
-             */
-            ParametersSet params = alg.getParameters();
-            params.getParameter(SlopeAlgorithm.DEM).setParameterValue(raster);
-            params.getParameter(SlopeAlgorithm.METHOD).setParameterValue(method);
-            params.getParameter(SlopeAlgorithm.UNITS).setParameterValue(unit);
-
-            
-            /*
-             *  This algorithm will generate a new raster layer.
-             * We can select "where" to put the result. To do this, we
-             * retrieve the output container and set the output channel,
-             * which contains information about the destiny of the resulting
-             * data. The most common way of using this is setting
-             * a FileOutputChannel, which contains the information needed to
-             * put the output to a file (basically a filename).
-             * If we omit this, a FileOutputChannel will be used,
-             * using a temporary filename.
-             */
-             
-            OutputObjectsSet outputs = alg.getOutputObjects();
-            Output out = outputs.getOutput(SlopeAlgorithm.SLOPE);
-            LOG.log(Level.ALL, "outputObject of out is {0}", out.getOutputObject().toString());
-
-            OutputRasterLayer resSlope = (OutputRasterLayer) out.getOutputObject();
-            LOG.log(Level.ALL, "outputObject of resSlope is {0}", resSlope.getOutputObject().toString());
-
-            /*
-             * Execute the algorithm. We use no task monitor,
-             * so we will not be able to monitor the progress
-             * of the execution. SEXTANTE also provides a DefaultTaskMonitor,
-             * which shows a simple progress bar, or you could make your
-             * own one, implementing the ITaskMonitor interface
-             *
-             * The execute method returns true if everything went OK, or false if it
-             * was canceled. Since we are not giving the user the chance to
-             * cancel it (there is no task monitor), we do not care about the
-             * return value.
-             *
-             * If something goes wrong, it will throw an exception.
-             */
-            alg.execute(null, outputFactory);
-
-            IRasterLayer slope = (IRasterLayer) resSlope;
-            LOG.log(Level.ALL, "Slope is {0}", slope.toString());
-
-            ret = new GridCoverage2D("slopes", (GridCoverage2D) slope);
-            LOG.log(Level.ALL, "ret is {0}", ret.getPropertyNames().toString());
-            
-        } catch (GeoAlgorithmExecutionException ex) {
-            
-            LOG.log(Level.SEVERE, "An exception in the GeoAlgorithm has been thrown {0}", ex.toString());
-            
-        } catch (Exception e) {
-            
-            LOG.log(Level.SEVERE, "A generic exception has been thrown {0}", e.toString());
-            
-        }
         return ret;
     }
+
     
+    /**
+     * Returns a slope layer created from the passed DEM
+     *
+     * @param dem the DEM
+     * @return a slope layer
+     * @throws GeoAlgorithmExecutionException
+     */
+    private static IRasterLayer getSlope(IRasterLayer dem, int method, int unit)
+            throws GeoAlgorithmExecutionException {
+
+        /*
+         * Instantiate the SlopeAlgorithm class
+         */
+        SlopeAlgorithm alg = new SlopeAlgorithm();
+
+        /*
+         * The first thing we have to do is to set up the input parameters
+         */
+        ParametersSet params = alg.getParameters();
+        params.getParameter(SlopeAlgorithm.DEM).setParameterValue(dem);
+
+        //Zevenberger & Thorne method
+        params.getParameter(SlopeAlgorithm.METHOD).setParameterValue(method);
+
+        //Resulting values in radians
+        params.getParameter(SlopeAlgorithm.UNITS).setParameterValue(unit);
+
+        /*
+         *  This algorithm will generate a new raster layer.
+         * We can select "where" to put the result. To do this, we
+         * retrieve the output container and set the output channel,
+         * which contains information about the destiny of the resulting
+         * data. The most common way of using this is setting
+         * a FileOutputChannel, which contains the information needed to
+         * put the output to a file (basically a filename).
+         * If we omit this, a FileOutputChannel will be used,
+         * using a temporary filename.
+         */
+        OutputObjectsSet outputs = alg.getOutputObjects();
+        Output out = outputs.getOutput(SlopeAlgorithm.SLOPE);
+        //out.setOutputChannel(new FileOutputChannel("xxx.tif"));
+
+        /*
+         * Execute the algorithm. We use no task monitor,
+         * so we will not be able to monitor the progress
+         * of the execution. SEXTANTE also provides a DefaultTaskMonitor,
+         * which shows a simple progress bar, or you could make your
+         * own one, implementing the ITaskMonitor interface
+         *
+         * The execute method returns true if everything went OK, or false if it
+         * was canceled. Since we are not giving the user the chance to
+         * cancel it (there is no task monitor), we do not care about the
+         * return value.
+         *
+         * If something goes wrong, it will throw an exception.
+         */
+        alg.execute(null, outputFactory);
+
+        /*
+         * Now the result can be taken from the output container
+         */
+        IRasterLayer slope = (IRasterLayer) out.getOutputObject();
+
+        return slope;
+
+    }
+    
+    static GridCoverage2D getLocalCoverage(String filename) throws Exception {
+
+        File file = new File("/tmp"+File.separatorChar+Slope.class.getSimpleName()+File.separatorChar+filename);
+        LOG.info("geotiff file to read "+file.toString());
+        AbstractGridFormat format = GridFormatFinder.findFormat(file);
+        GridCoverage2DReader reader = format.getReader(file);
+        GridCoverage2D coverage = reader.read(null);
+        LOG.info("coverage=" + coverage);
+        return coverage;
+    }
+    
+    //write to geotiff
+    static void writeToGeotiff(GridCoverage2D cov, String fileName) {
+        try {
+            GeoTiffWriteParams wp = new GeoTiffWriteParams();
+            wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+            wp.setCompressionType("LZW");
+            ParameterValueGroup params = new GeoTiffFormat().getWriteParameters();
+            params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
+            File wfile = new File(fileName);
+            LOG.info("wfile="+wfile);
+            new GeoTiffWriter(wfile).write(cov, (GeneralParameterValue[]) params.values().toArray(new GeneralParameterValue[1]));
+        } catch (Exception e) {
+            LOG.severe("exception while writing geotiff.");
+            e.printStackTrace();
+        }
+    }
 }
