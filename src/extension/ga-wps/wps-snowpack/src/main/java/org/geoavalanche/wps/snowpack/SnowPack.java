@@ -16,6 +16,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -47,15 +48,13 @@ import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
 
     private static final Logger LOG = Logger.getLogger(SnowPack.class.getName());
     private static final CoverageProcessor PROCESSOR = CoverageProcessor.getInstance();
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    private static final String LOCAL_REPOSITORY = "c:/tmp/";
-
+    private static final String LOCAL_REPOSITORY = System.getProperty("java.io.tmpdir")+File.separator+"snowpack"+File.separator;
 
     public SnowPack() {
         super(Text.text("GeoAvalanche"), "geoavalanche", SnowPack.class);
@@ -66,37 +65,58 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
     public static SimpleFeatureCollection SnowPack(
             @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection (with crs EPSG:4326)", min = 1, max = 1) SimpleFeatureCollection featureCollection
     ) throws Exception {
+        try {
 
-        List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
-        SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
-        
-        ArrayList<String> filenames = getTimeData("daily_SWE_PanEuropean_Microwave");
-        for (String _filename : filenames) {
-            download(_filename);
-        }  
-            
-        SimpleFeatureIterator itr = featureCollection.features();
-        while (itr.hasNext()) {
-            SimpleFeature feature = itr.next();
-            fb.reset();
-            for (Property p : feature.getProperties()) {
-                fb.set(p.getName().getLocalPart(), p.getValue());
-            }
-            Geometry theGeometry = (Geometry)feature.getAttribute("the_geom");
-            if (theGeometry == null) {
-                theGeometry = (Geometry)feature.getAttribute("geometry");
-            }
-            if (theGeometry != null) {
-                fb.set("snowmelt", snowmelt(theGeometry, filenames));
-                fb.set("snowcover", "NA");
+            List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
+            SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
+
+            ArrayList<String> daily_SWE_PanEuropean_Microwave = getTimeData("daily_SWE_PanEuropean_Microwave");
+            for (String _filename : daily_SWE_PanEuropean_Microwave) {
+                download(_filename);
             }
 
-            featuresList.add(fb.buildFeature(feature.getID()));
+            String daily_FSC_PanEuropean_Optical = getLastTimeData("daily_FSC_PanEuropean_Optical");
+            //String daily_FSC_PanEuropean_Optical_Uncertainty = getLastTimeData("daily_FSC_PanEuropean_Optical_Uncertainty");
+            String daily_FSC_Alps_Optical = getLastTimeData("daily_FSC_Alps_Optical");
+            String daily_FSC_Baltic_Optical = getLastTimeData("daily_FSC_Baltic_Optical");
+            //String multitemp_FSC_Scandinavia_Optical_Radar = getLastTimeData("multitemp_FSC_Scandinavia_Optical_Radar");
+            //String multitemp_FSC_Scandinavia_Optical = getLastTimeData("multitemp_FSC_Scandinavia_Optical");
+
+            SimpleFeatureIterator itr = featureCollection.features();
+            Level _level = LOG.getLevel();
+            while (itr.hasNext()) {
+                
+                SimpleFeature feature = itr.next();
+                fb.reset();
+                for (Property p : feature.getProperties()) {
+                    fb.set(p.getName().getLocalPart(), p.getValue());
+                }
+                Geometry theGeometry = (Geometry) feature.getAttribute("the_geom");
+                if (theGeometry == null) {
+                    theGeometry = (Geometry) feature.getAttribute("geometry");
+                }
+                if (theGeometry != null) {
+                    fb.set("swe", swe(theGeometry, daily_SWE_PanEuropean_Microwave));
+                    fb.set("fsc",
+                        fsc(theGeometry, daily_FSC_PanEuropean_Optical) 
+                        //+","+fsc(theGeometry, daily_FSC_PanEuropean_Optical_Uncertainty)
+                        +","+fsc(theGeometry, daily_FSC_Alps_Optical)
+                        +","+fsc(theGeometry, daily_FSC_Baltic_Optical)
+                        //+ "," + fsc(theGeometry, multitemp_FSC_Scandinavia_Optical_Radar) 
+                        //+ "," + fsc(theGeometry, multitemp_FSC_Scandinavia_Optical)
+                    );
+                }
+
+                featuresList.add(fb.buildFeature(feature.getID()));
+                LOG.setLevel(Level.OFF);
+            }
+            LOG.setLevel(_level);
+            SimpleFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
+            LOG.info("nrec = " + ret.size());
+            return ret;
+        } catch (Exception e) {
+            return featureCollection;
         }
-
-        SimpleFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
-        LOG.info("nrec = " + ret.size());
-        return ret;
     }
 
     static SimpleFeatureBuilder getSimpleFeatureBuilder(SimpleFeatureCollection featureCollection) {
@@ -108,8 +128,8 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
                 theProperties.put(p.getName().getLocalPart(), p.getType().getBinding());
             }
         }
-        theProperties.put("snowmelt", String.class);
-        theProperties.put("snowcover", String.class);
+        theProperties.put("swe", String.class);
+        theProperties.put("fsc", String.class);
 
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName(featureCollection.getSchema().getName());
@@ -122,19 +142,19 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
         return fb;
     }
 
-    static String snowmelt(Geometry theGeometry, ArrayList<String> filenames) throws Exception {
+    static String swe(Geometry theGeometry, ArrayList<String> filenames) throws Exception {
         String ret = null;
         for (String _filename : filenames) {
             if (ret == null) {
-                ret = snowmelt(theGeometry, _filename);
+                ret = SnowPack.swe(theGeometry, _filename);
             } else {
-                ret = ret+","+snowmelt(theGeometry, _filename);
+                ret = ret+","+SnowPack.swe(theGeometry, _filename);
             }
         }
         return ret;
     }
     
-    static String snowmelt(Geometry theGeometry, String filename) throws Exception {
+    static String swe(Geometry theGeometry, String filename) throws Exception {
 
         File file = new File(LOCAL_REPOSITORY+filename);
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
@@ -165,15 +185,63 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
             LOG.info("maximum[" + x + "]=" + maximum[x]);
         }
         //SWE = (CODE – 100) * 4.0 
-        double swe = (maximum[0]>=100&maximum[0]<=200)?((maximum[0]-100)*4):(-maximum[0]);
-        LOG.info("snow water equivalent (SWE) = " + swe + " mm");
+        //double swe = (maximum[0]>=100&maximum[0]<=200)?((maximum[0]-100)*4):(-maximum[0]);
+        double swe = maximum[0];
+        LOG.info("swe (snow water equivalent) = " + swe);
 
         return "" + swe;
     }
+        
+    static String fsc(Geometry theGeometry, String filename) throws Exception {
+        try {
+            File file = new File(LOCAL_REPOSITORY + filename);
+            AbstractGridFormat format = GridFormatFinder.findFormat(file);
+            GridCoverage2DReader reader = format.getReader(file);
+            GridCoverage2D coverage = reader.read(null);
+            LOG.info("coverage=" + coverage);
 
+            LOG.info("geometry=" + theGeometry);
+
+            GeneralEnvelope bounds = new GeneralEnvelope(new ReferencedEnvelope(theGeometry.getEnvelopeInternal(), coverage.getCoordinateReferenceSystem()));
+            LOG.info("bounds=" + bounds);
+
+            ParameterValueGroup paramCoverageCrop = PROCESSOR.getOperation("CoverageCrop").getParameters();
+            paramCoverageCrop.parameter("Source").setValue(coverage);
+            paramCoverageCrop.parameter("Envelope").setValue(bounds);
+            GridCoverage2D cropped = (GridCoverage2D) PROCESSOR.doOperation(paramCoverageCrop);
+            LOG.info("cropped=" + cropped);
+
+            ParameterValueGroup paramsExtrema = PROCESSOR.getOperation("Extrema").getParameters();
+            paramsExtrema.parameter("Source").setValue(cropped);
+            GridCoverage2D result = (GridCoverage2D) PROCESSOR.doOperation(paramsExtrema, null);
+            double[] minimum = (double[]) result.getProperty("minimum");
+            double[] maximum = (double[]) result.getProperty("maximum");
+            for (int x = 0; x < minimum.length; x++) {
+                LOG.info("minimum[" + x + "]=" + minimum[x]);
+            }
+            for (int x = 0; x < maximum.length; x++) {
+                LOG.info("maximum[" + x + "]=" + maximum[x]);
+            }
+            //FSC = CODE – 100
+            //double fsc = (maximum[0] >= 100 & maximum[0] <= 200) ? ((maximum[0] - 100)) : (-maximum[0]);
+            double fsc = maximum[0];
+            LOG.info("fsc (Fractional Snow Cover) = " + fsc);
+
+            return "" + fsc;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
     private static void download(String filename) {
         String remotefile = "http://neso1.cryoland.enveo.at/cryoland/ows?service=wcs&request=GetCoverage&coverageid=" + filename;
         String localfile = LOCAL_REPOSITORY+filename;
+        
+        File dir = new File(LOCAL_REPOSITORY);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        
         File f = new File(localfile);
         if(f.exists() && !f.isDirectory()) { 
             LOG.info(localfile+" was already downloaded");
@@ -204,13 +272,24 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
         }
     }
 
+    private static String getLastTimeData(String collection) throws Exception {
+        try {
+            ArrayList<String> thelist = getTimeData(collection);
+            String filename = thelist.get(thelist.size() - 1);
+            download(filename);
+            return filename;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
     private static ArrayList<String> getTimeData(String collection) throws Exception {
         ArrayList<String> ret = new ArrayList();
         
         DefaultHttpClient httpclient = new DefaultHttpClient();
         try {
             Calendar _calendar = Calendar.getInstance();
-            _calendar.add(Calendar.DAY_OF_MONTH, -7);
+            _calendar.add(Calendar.DAY_OF_MONTH, -10);
             sdf.format(_calendar.getTime());
         
             String body =
