@@ -1,6 +1,14 @@
 package org.geoavalanche.wps.snowpack;
 
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryCollection;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiPolygon;
+import com.vividsolutions.jts.geom.Polygon;
+import it.geosolutions.jaiext.range.Range;
+import it.geosolutions.jaiext.range.RangeFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,6 +46,7 @@ import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
@@ -47,6 +56,9 @@ import org.geotools.text.Text;
 import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.filter.capability.GeometryOperand;
+import org.opengis.geometry.DirectPosition;
+import org.opengis.geometry.Envelope;
 import org.opengis.parameter.ParameterValueGroup;
 
 public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
@@ -76,11 +88,8 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
             }
 
             String daily_FSC_PanEuropean_Optical = getLastTimeData("daily_FSC_PanEuropean_Optical");
-            //String daily_FSC_PanEuropean_Optical_Uncertainty = getLastTimeData("daily_FSC_PanEuropean_Optical_Uncertainty");
             String daily_FSC_Alps_Optical = getLastTimeData("daily_FSC_Alps_Optical");
             String daily_FSC_Baltic_Optical = getLastTimeData("daily_FSC_Baltic_Optical");
-            //String multitemp_FSC_Scandinavia_Optical_Radar = getLastTimeData("multitemp_FSC_Scandinavia_Optical_Radar");
-            //String multitemp_FSC_Scandinavia_Optical = getLastTimeData("multitemp_FSC_Scandinavia_Optical");
 
             SimpleFeatureIterator itr = featureCollection.features();
             Level _level = LOG.getLevel();
@@ -96,14 +105,12 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
                     theGeometry = (Geometry) feature.getAttribute("geometry");
                 }
                 if (theGeometry != null) {
+                    //fb.set("the_geom", getPixel(theGeometry, daily_FSC_PanEuropean_Optical));
                     fb.set("swe", swe(theGeometry, daily_SWE_PanEuropean_Microwave));
                     fb.set("fsc",
                         fsc(theGeometry, daily_FSC_PanEuropean_Optical) 
-                        //+","+fsc(theGeometry, daily_FSC_PanEuropean_Optical_Uncertainty)
                         +","+fsc(theGeometry, daily_FSC_Alps_Optical)
                         +","+fsc(theGeometry, daily_FSC_Baltic_Optical)
-                        //+ "," + fsc(theGeometry, multitemp_FSC_Scandinavia_Optical_Radar) 
-                        //+ "," + fsc(theGeometry, multitemp_FSC_Scandinavia_Optical)
                     );
                 }
 
@@ -119,6 +126,41 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
         }
     }
 
+    static Geometry getPixel(Geometry theGeometry, String filename) throws Exception {
+        File file = new File(LOCAL_REPOSITORY + filename);
+        AbstractGridFormat format = GridFormatFinder.findFormat(file);
+        GridCoverage2DReader reader = format.getReader(file);
+        GridCoverage2D coverage = reader.read(null);
+        LOG.info("coverage=" + coverage);
+
+        LOG.info("geometry=" + theGeometry);
+
+        GeneralEnvelope bounds = new GeneralEnvelope(new ReferencedEnvelope(theGeometry.getEnvelopeInternal(), coverage.getCoordinateReferenceSystem()));
+        LOG.info("bounds=" + bounds);
+
+        ParameterValueGroup paramCoverageCrop = PROCESSOR.getOperation("CoverageCrop").getParameters();
+        paramCoverageCrop.parameter("Source").setValue(coverage);
+        paramCoverageCrop.parameter("Envelope").setValue(bounds);
+        GridCoverage2D cropped = (GridCoverage2D) PROCESSOR.doOperation(paramCoverageCrop);
+        LOG.info("cropped=" + cropped);
+
+        Envelope e = cropped.getEnvelope();
+        double[] uppercorner = e.getUpperCorner().getCoordinate();
+        double[] lowercorner = e.getLowerCorner().getCoordinate();
+
+        GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+        Coordinate[] coords =  new Coordinate[] {
+            new Coordinate(uppercorner[0], uppercorner[1]), 
+            new Coordinate(uppercorner[0], lowercorner[1]), 
+            new Coordinate(lowercorner[0], lowercorner[1]),
+            new Coordinate(lowercorner[0], uppercorner[1]), 
+            new Coordinate(uppercorner[0], uppercorner[1])
+        };
+        Polygon thePolygon = geometryFactory.createPolygon(coords);
+        MultiPolygon theMultiPolygon = new MultiPolygon(new Polygon[]{thePolygon}, thePolygon.getFactory());
+        return theMultiPolygon;      
+    }
+    
     static SimpleFeatureBuilder getSimpleFeatureBuilder(SimpleFeatureCollection featureCollection) {
         Map<String, Class> theProperties = new HashMap();
         SimpleFeatureIterator itr = featureCollection.features();
@@ -146,17 +188,38 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
         String ret = null;
         for (String _filename : filenames) {
             if (ret == null) {
-                ret = SnowPack.swe(theGeometry, _filename);
+                ret = swe(theGeometry, _filename);
             } else {
-                ret = ret+","+SnowPack.swe(theGeometry, _filename);
+                ret = ret+","+swe(theGeometry, _filename);
             }
         }
         return ret;
     }
     
     static String swe(Geometry theGeometry, String filename) throws Exception {
+        try {
+            //SWE = (CODE – 100) * 4.0 
+            double swe = maximum(theGeometry, filename);
+            LOG.info("swe (snow water equivalent) = " + swe);
+            return "" + swe;
+        } catch (Throwable e) {
+            return "null";
+        }
+    }
 
-        File file = new File(LOCAL_REPOSITORY+filename);
+    static String fsc(Geometry theGeometry, String filename) throws Exception {
+        try {
+            //FSC = CODE – 100
+            double fsc = maximum(theGeometry, filename);
+            LOG.info("fsc (Fractional Snow Cover) = " + fsc);
+            return "" + fsc;
+        } catch (Throwable e) {
+            return "null";
+        }
+    }
+
+    static double maximum(Geometry theGeometry, String filename) throws Exception {
+        File file = new File(LOCAL_REPOSITORY + filename);
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
         GridCoverage2DReader reader = format.getReader(file);
         GridCoverage2D coverage = reader.read(null);
@@ -166,71 +229,47 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
 
         GeneralEnvelope bounds = new GeneralEnvelope(new ReferencedEnvelope(theGeometry.getEnvelopeInternal(), coverage.getCoordinateReferenceSystem()));
         LOG.info("bounds=" + bounds);
-
-        ParameterValueGroup paramCoverageCrop = PROCESSOR.getOperation("CoverageCrop").getParameters();
-        paramCoverageCrop.parameter("Source").setValue(coverage);
-        paramCoverageCrop.parameter("Envelope").setValue(bounds);
-        GridCoverage2D cropped = (GridCoverage2D) PROCESSOR.doOperation(paramCoverageCrop);
-        LOG.info("cropped=" + cropped);
-
-        ParameterValueGroup paramsExtrema = PROCESSOR.getOperation("Extrema").getParameters();
-        paramsExtrema.parameter("Source").setValue(cropped);
-        GridCoverage2D result = (GridCoverage2D) PROCESSOR.doOperation(paramsExtrema, null);
-        double[] minimum = (double[]) result.getProperty("minimum");
-        double[] maximum = (double[]) result.getProperty("maximum");
-        for (int x = 0; x < minimum.length; x++) {
-            LOG.info("minimum[" + x + "]=" + minimum[x]);
-        }
-        for (int x = 0; x < maximum.length; x++) {
-            LOG.info("maximum[" + x + "]=" + maximum[x]);
-        }
-        //SWE = (CODE – 100) * 4.0 
-        //double swe = (maximum[0]>=100&maximum[0]<=200)?((maximum[0]-100)*4):(-maximum[0]);
-        double swe = maximum[0];
-        LOG.info("swe (snow water equivalent) = " + swe);
-
-        return "" + swe;
-    }
         
-    static String fsc(Geometry theGeometry, String filename) throws Exception {
+        Polygon roi = null;
+        if (theGeometry instanceof Polygon) {
+            roi = (Polygon)theGeometry;
+        } else if (theGeometry instanceof MultiPolygon) {
+            MultiPolygon mp = (MultiPolygon) theGeometry;
+            if (mp.getNumGeometries()>=1) {
+                roi = (Polygon)mp.getGeometryN(0);
+            }
+        }
+        LOG.info("roi=" + roi);
+        
+        GridCoverage2D cropped = null;
         try {
-            File file = new File(LOCAL_REPOSITORY + filename);
-            AbstractGridFormat format = GridFormatFinder.findFormat(file);
-            GridCoverage2DReader reader = format.getReader(file);
-            GridCoverage2D coverage = reader.read(null);
-            LOG.info("coverage=" + coverage);
-
-            LOG.info("geometry=" + theGeometry);
-
-            GeneralEnvelope bounds = new GeneralEnvelope(new ReferencedEnvelope(theGeometry.getEnvelopeInternal(), coverage.getCoordinateReferenceSystem()));
-            LOG.info("bounds=" + bounds);
-
+            //Range nodata = RangeFactory.create(201.0, 300.0);
             ParameterValueGroup paramCoverageCrop = PROCESSOR.getOperation("CoverageCrop").getParameters();
             paramCoverageCrop.parameter("Source").setValue(coverage);
             paramCoverageCrop.parameter("Envelope").setValue(bounds);
-            GridCoverage2D cropped = (GridCoverage2D) PROCESSOR.doOperation(paramCoverageCrop);
-            LOG.info("cropped=" + cropped);
-
-            ParameterValueGroup paramsExtrema = PROCESSOR.getOperation("Extrema").getParameters();
-            paramsExtrema.parameter("Source").setValue(cropped);
-            GridCoverage2D result = (GridCoverage2D) PROCESSOR.doOperation(paramsExtrema, null);
-            double[] minimum = (double[]) result.getProperty("minimum");
-            double[] maximum = (double[]) result.getProperty("maximum");
-            for (int x = 0; x < minimum.length; x++) {
-                LOG.info("minimum[" + x + "]=" + minimum[x]);
+            //paramCoverageCrop.parameter("NoData").setValue(nodata);
+            if (roi!=null) { 
+                paramCoverageCrop.parameter("ROI").setValue(roi); 
             }
-            for (int x = 0; x < maximum.length; x++) {
-                LOG.info("maximum[" + x + "]=" + maximum[x]);
-            }
-            //FSC = CODE – 100
-            //double fsc = (maximum[0] >= 100 & maximum[0] <= 200) ? ((maximum[0] - 100)) : (-maximum[0]);
-            double fsc = maximum[0];
-            LOG.info("fsc (Fractional Snow Cover) = " + fsc);
-
-            return "" + fsc;
-        } catch (Exception e) {
-            return null;
+            cropped = (GridCoverage2D) PROCESSOR.doOperation(paramCoverageCrop);
+            LOG.info("cropped=" + cropped); 
+            
+        } catch(Exception e) {
+            ParameterValueGroup paramCoverageCrop = PROCESSOR.getOperation("CoverageCrop").getParameters();
+            paramCoverageCrop.parameter("Source").setValue(coverage);
+            paramCoverageCrop.parameter("Envelope").setValue(bounds);
+            cropped = (GridCoverage2D) PROCESSOR.doOperation(paramCoverageCrop);            
         }
+
+        ParameterValueGroup paramsExtrema = PROCESSOR.getOperation("Extrema").getParameters();
+        paramsExtrema.parameter("Source").setValue(cropped);        
+        GridCoverage2D result = (GridCoverage2D) PROCESSOR.doOperation(paramsExtrema, null);
+        double[] maximum = (double[]) result.getProperty("maximum");
+        for (int x = 0; x < maximum.length; x++) {
+            LOG.info("maximum[" + x + "]=" + maximum[x]);
+        }
+                
+        return maximum[0];
     }
     
     private static void download(String filename) {
@@ -355,16 +394,5 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
             //httpclient.close();
         }
         return ret;
-    }
-    
-    public static void main(String[] args) {
-        try {         
-            ArrayList<String> filenames = getTimeData("daily_SWE_PanEuropean_Microwave");
-            for (String _filename : filenames) {
-                download(_filename);
-            }            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }
