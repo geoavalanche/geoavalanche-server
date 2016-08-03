@@ -35,30 +35,39 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.coverage.grid.io.GridFormatFinder;
+import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
 import org.geotools.coverage.processing.CoverageProcessor;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.gce.geotiff.GeoTiffFormat;
+import org.geotools.gce.geotiff.GeoTiffWriteParams;
+import org.geotools.geometry.Envelope2D;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.ows.ServiceException;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.process.factory.StaticMethodsProcessFactory;
 import org.geotools.text.Text;
+import org.opengis.coverage.grid.GridCoverageWriter;
 import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.capability.GeometryOperand;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.geometry.Envelope;
+import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValueGroup;
 
 public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
@@ -248,9 +257,9 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
             paramCoverageCrop.parameter("Source").setValue(coverage);
             paramCoverageCrop.parameter("Envelope").setValue(bounds);
             //paramCoverageCrop.parameter("NoData").setValue(nodata);
-            if (roi!=null) { 
-                paramCoverageCrop.parameter("ROI").setValue(roi); 
-            }
+            //if (roi!=null) { 
+            //    paramCoverageCrop.parameter("ROI").setValue(roi); 
+            //}
             cropped = (GridCoverage2D) PROCESSOR.doOperation(paramCoverageCrop);
             LOG.info("cropped=" + cropped); 
             
@@ -268,10 +277,33 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
         for (int x = 0; x < maximum.length; x++) {
             LOG.info("maximum[" + x + "]=" + maximum[x]);
         }
-                
+        
+        save(cropped, filename);
+        
         return maximum[0];
     }
     
+    static void save(GridCoverage2D sourceCoverage, String filename) throws Exception {
+        FileOutputStream output = new FileOutputStream(LOCAL_REPOSITORY + "crop_"+filename);
+        
+        final GeoTiffFormat format = new GeoTiffFormat();
+        final GeoTiffWriteParams wp = new GeoTiffWriteParams();
+        wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+        wp.setCompressionType("LZW");
+        wp.setCompressionQuality(1.0F);
+        //wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
+        //wp.setTiling(256, 256);
+
+        final ParameterValueGroup writerParams = format.getWriteParameters();
+        writerParams.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
+
+        GridCoverageWriter writer = format.getWriter(output);
+        writer.write(sourceCoverage, (GeneralParameterValue[]) writerParams.values().toArray(new GeneralParameterValue[1]));
+
+        writer.dispose();
+        output.close();
+    }            
+        
     private static void download(String filename) {
         String remotefile = "http://neso1.cryoland.enveo.at/cryoland/ows?service=wcs&request=GetCoverage&coverageid=" + filename;
         String localfile = LOCAL_REPOSITORY+filename;
