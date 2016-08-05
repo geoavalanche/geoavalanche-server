@@ -80,15 +80,6 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
             List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
             SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
 
-            ArrayList<String> daily_SWE_PanEuropean_Microwave = getTimeData("daily_SWE_PanEuropean_Microwave");
-            for (String _filename : daily_SWE_PanEuropean_Microwave) {
-                download(_filename);
-            }
-
-            String daily_FSC_PanEuropean_Optical = getLastTimeData("daily_FSC_PanEuropean_Optical");
-            String daily_FSC_Alps_Optical = getLastTimeData("daily_FSC_Alps_Optical");
-            String daily_FSC_Baltic_Optical = getLastTimeData("daily_FSC_Baltic_Optical");
-
             SimpleFeatureIterator itr = featureCollection.features();
             Level _level = LOG.getLevel();
             while (itr.hasNext()) {
@@ -104,11 +95,15 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
                 }
                 if (theGeometry != null) {
                     //fb.set("the_geom", getPixel(theGeometry, daily_FSC_PanEuropean_Optical));
-                    fb.set("swe", swe(theGeometry, daily_SWE_PanEuropean_Microwave));
+                    fb.set("swe", swe(theGeometry, getTimeData("daily_SWE_PanEuropean_Microwave")));
                     fb.set("fsc",
-                        fsc(theGeometry, daily_FSC_PanEuropean_Optical) 
-                        +","+fsc(theGeometry, daily_FSC_Alps_Optical)
-                        +","+fsc(theGeometry, daily_FSC_Baltic_Optical)
+                        fsc(theGeometry, getLastTimeData("daily_FSC_PanEuropean_Optical",10)) 
+                        +","+fsc(theGeometry, getLastTimeData("daily_FSC_Alps_Optical",10))
+                        +","+fsc(theGeometry, getLastTimeData("daily_FSC_Baltic_Optical",10))
+                    );
+                    fb.set("scaw",
+                        scaw(theGeometry, getLastTimeData("multitemp_SCAW_Alps_Radar",null)) 
+                        +","+scaw(theGeometry, getLastTimeData("daily_SCAW_Scandinavia_Radar",null))
                     );
                 }
 
@@ -170,6 +165,7 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
         }
         theProperties.put("swe", String.class);
         theProperties.put("fsc", String.class);
+        theProperties.put("scaw", String.class);
 
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName(featureCollection.getSchema().getName());
@@ -216,6 +212,16 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
         }
     }
 
+    static String scaw(Geometry theGeometry, String filename) throws Exception {
+        try {
+            double scaw = maximum(theGeometry, filename);
+            LOG.info("scaw = " + scaw);
+            return "" + scaw;
+        } catch (Throwable e) {
+            return "null";
+        }        
+    }
+    
     static double maximum(Geometry theGeometry, String filename) throws Exception {
         File file = new File(LOCAL_REPOSITORY + filename);
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
@@ -332,9 +338,9 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
         }
     }
 
-    private static String getLastTimeData(String collection) throws Exception {
+    private static String getLastTimeData(String collection, Integer ndays) throws Exception {
         try {
-            ArrayList<String> thelist = getTimeData(collection);
+            ArrayList<String> thelist = SnowPack.getTimeData(collection, ndays);
             String filename = thelist.get(thelist.size() - 1);
             download(filename);
             return filename;
@@ -344,25 +350,41 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
     }
     
     private static ArrayList<String> getTimeData(String collection) throws Exception {
+        try {
+            ArrayList<String> ret = SnowPack.getTimeData(collection, 15);
+            for (String _filename : ret) {
+                download(_filename);
+            }
+            return ret;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static ArrayList<String> getTimeData(String collection, Integer ndays) throws Exception {
         ArrayList<String> ret = new ArrayList();
         
         DefaultHttpClient httpclient = new DefaultHttpClient();
         try {
             Calendar _calendar = Calendar.getInstance();
-            _calendar.add(Calendar.DAY_OF_MONTH, -10);
-            sdf.format(_calendar.getTime());
+            String wpsinput = "";
+            if (ndays != null) {
+                _calendar.add(Calendar.DAY_OF_MONTH, -ndays);
+                wpsinput =
+                    "        <wps:Input>\n"+
+                    "            <ows:Identifier>begin_time</ows:Identifier>\n"+
+                    "            <wps:Data>\n"+
+                    "                <wps:LiteralData>"+sdf.format(_calendar.getTime())+"T00:00:00Z</wps:LiteralData>\n"+
+                    "            </wps:Data>\n"+
+                    "        </wps:Input>\n";                
+            }
         
             String body =
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
                 "<wps:Execute service=\"WPS\" version=\"1.0.0\" xmlns=\"http://www.opengis.net/wps/1.0.0\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:wcs=\"http://www.opengis.net/wcs/1.1.1\" xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsAll.xsd\">\n"+
                 "    <ows:Identifier>getTimeData</ows:Identifier>\n"+
                 "    <wps:DataInputs>\n"+
-                "        <wps:Input>\n"+
-                "            <ows:Identifier>begin_time</ows:Identifier>\n"+
-                "            <wps:Data>\n"+
-                "                <wps:LiteralData>"+sdf.format(_calendar.getTime())+"T00:00:00Z</wps:LiteralData>\n"+
-                "            </wps:Data>\n"+
-                "        </wps:Input>\n"+
+                wpsinput +
                 "        <wps:Input>\n"+
                 "            <ows:Identifier>collection</ows:Identifier>\n"+
                 "            <wps:Data>\n"+
