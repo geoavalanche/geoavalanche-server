@@ -76,10 +76,21 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
             @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection (with crs EPSG:4326)", min = 1, max = 1) SimpleFeatureCollection featureCollection
     ) throws Exception {
         try {
-
+            LOG.info("step 1");
+            
             List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
             SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
 
+            ArrayList<String> daily_SWE_PanEuropean_Microwave = getTimeData("daily_SWE_PanEuropean_Microwave");
+            String daily_FSC_PanEuropean_Optical = getLastTimeData("daily_FSC_PanEuropean_Optical",10);
+            String daily_FSC_Alps_Optical = getLastTimeData("daily_FSC_Alps_Optical",10);
+            String daily_FSC_Baltic_Optical = getLastTimeData("daily_FSC_Baltic_Optical",10);
+            String multitemp_SCAW_Alps_Radar = getLastTimeData("multitemp_SCAW_Alps_Radar",null);
+            String daily_SCAW_Scandinavia_Radar = getLastTimeData("daily_SCAW_Scandinavia_Radar",null);
+            LOG.info("step 1 ... done");
+
+            LOG.info("step 2");
+            
             SimpleFeatureIterator itr = featureCollection.features();
             Level _level = LOG.getLevel();
             while (itr.hasNext()) {
@@ -94,17 +105,14 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
                     theGeometry = (Geometry) feature.getAttribute("geometry");
                 }
                 if (theGeometry != null) {
-                    //fb.set("the_geom", getPixel(theGeometry, daily_FSC_PanEuropean_Optical));
-                    fb.set("swe", swe(theGeometry, getTimeData("daily_SWE_PanEuropean_Microwave")));
-                    fb.set("fsc",
-                        fsc(theGeometry, getLastTimeData("daily_FSC_PanEuropean_Optical",10)) 
-                        +","+fsc(theGeometry, getLastTimeData("daily_FSC_Alps_Optical",10))
-                        +","+fsc(theGeometry, getLastTimeData("daily_FSC_Baltic_Optical",10))
-                    );
-                    fb.set("scaw",
-                        scaw(theGeometry, getLastTimeData("multitemp_SCAW_Alps_Radar",null)) 
-                        +","+scaw(theGeometry, getLastTimeData("daily_SCAW_Scandinavia_Radar",null))
-                    );
+                    fb.set("swe", swe(theGeometry, daily_SWE_PanEuropean_Microwave));
+                    String fsc1 = fsc_noroi(theGeometry, daily_FSC_PanEuropean_Optical);
+                    String fsc2 = fsc(theGeometry, daily_FSC_Alps_Optical);
+                    String fsc3 = fsc(theGeometry, daily_FSC_Baltic_Optical);
+                    fb.set("fsc", fsc1+","+fsc2+","+fsc3);
+                    String scaw1 = scaw(theGeometry, multitemp_SCAW_Alps_Radar);
+                    String scaw2 = scaw(theGeometry, daily_SCAW_Scandinavia_Radar);
+                    fb.set("scaw", scaw1+","+scaw2);
                 }
 
                 featuresList.add(fb.buildFeature(feature.getID()));
@@ -112,6 +120,7 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
             }
             LOG.setLevel(_level);
             SimpleFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
+            LOG.info("step 2 ... done ");
             LOG.info("nrec = " + ret.size());
             return ret;
         } catch (Exception e) {
@@ -187,12 +196,13 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
                 ret = ret+","+swe(theGeometry, _filename);
             }
         }
+        if (ret == null) ret="null";
         return ret;
     }
     
     static String swe(Geometry theGeometry, String filename) throws Exception {
         try {
-            //SWE = (CODE – 100) * 4.0 
+            LOG.info("swe, filename=" + filename);
             double swe = maximum(theGeometry, filename);
             LOG.info("swe (snow water equivalent) = " + swe);
             return "" + swe;
@@ -203,8 +213,19 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
 
     static String fsc(Geometry theGeometry, String filename) throws Exception {
         try {
-            //FSC = CODE – 100
+            LOG.info("fsc, filename=" + filename);
             double fsc = maximum(theGeometry, filename);
+            LOG.info("fsc (Fractional Snow Cover) = " + fsc);
+            return "" + fsc;
+        } catch (Throwable e) {
+            return "null";
+        }
+    }
+
+    static String fsc_noroi(Geometry theGeometry, String filename) throws Exception {
+        try {
+            LOG.info("fsc, filename=" + filename);
+            double fsc = maximum(theGeometry, filename, false);
             LOG.info("fsc (Fractional Snow Cover) = " + fsc);
             return "" + fsc;
         } catch (Throwable e) {
@@ -214,6 +235,7 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
 
     static String scaw(Geometry theGeometry, String filename) throws Exception {
         try {
+            LOG.info("scaw, filename=" + filename);
             double scaw = maximum(theGeometry, filename);
             LOG.info("scaw = " + scaw);
             return "" + scaw;
@@ -223,6 +245,13 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
     }
     
     static double maximum(Geometry theGeometry, String filename) throws Exception {
+        return maximum(theGeometry, filename, true);
+    }
+
+    static double maximum(Geometry theGeometry, String filename, boolean withRoi) throws Exception {
+        if (filename==null) {
+            throw new Exception("filename can not be null");            
+        }
         File file = new File(LOCAL_REPOSITORY + filename);
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
         GridCoverage2DReader reader = format.getReader(file);
@@ -235,15 +264,17 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
         LOG.info("bounds=" + bounds);
         
         Polygon roi = null;
-        if (theGeometry instanceof Polygon) {
-            roi = (Polygon)theGeometry;
-        } else if (theGeometry instanceof MultiPolygon) {
-            MultiPolygon mp = (MultiPolygon) theGeometry;
-            if (mp.getNumGeometries()>=1) {
-                roi = (Polygon)mp.getGeometryN(0);
+        if (withRoi) {            
+            if (theGeometry instanceof Polygon) {
+                roi = (Polygon)theGeometry;
+            } else if (theGeometry instanceof MultiPolygon) {
+                MultiPolygon mp = (MultiPolygon) theGeometry;
+                if (mp.getNumGeometries()>=1) {
+                    roi = (Polygon)mp.getGeometryN(0);
+                }
             }
+            LOG.info("roi=" + roi);
         }
-        LOG.info("roi=" + roi);
         
         GridCoverage2D cropped = null;
         try {
@@ -273,7 +304,7 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
             LOG.info("maximum[" + x + "]=" + maximum[x]);
         }
         
-        save(cropped, filename);
+        //save(cropped, filename);
         
         return maximum[0];
     }
