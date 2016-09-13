@@ -100,7 +100,7 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
         return ret;
     }
     
-    static List<SimpleFeature> buffer(SimpleFeatureBuilder fb, SimpleFeature feature, LineString theGeometry, Double distance, Integer quadrantSegments, Integer capStyle) {       
+    static List<SimpleFeature> buffer(SimpleFeatureBuilder fb, SimpleFeature feature, LineString theGeometry, Double distance, Integer quadrantSegments, Integer capStyle) {
         int _quadrantSegments = quadrantSegments == null ? 10 : quadrantSegments.intValue();
         int _capStyle = capStyle == null ? BufferParameters.CAP_ROUND : capStyle.intValue();
         List<SimpleFeature> featuresList = new ArrayList();
@@ -108,20 +108,36 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
         for (int x = 1; x < theGeometry.getCoordinates().length; x++) {
             Coordinate[] points = new Coordinate[]{theGeometry.getCoordinates()[x - 1], theGeometry.getCoordinates()[x]};
             LineString newLineString = theGeometryFactory.createLineString(points);
-            Polygon thePolygon = (Polygon) newLineString.buffer(distance, _quadrantSegments, _capStyle);
-            MultiPolygon theMultiPolygon = new MultiPolygon(new Polygon[]{thePolygon}, thePolygon.getFactory());
-            fb.reset();
-            for (Property p : feature.getProperties()) {
-                if (!p.getName().getLocalPart().equalsIgnoreCase("geometry")) {
-                    fb.set(p.getName().getLocalPart(), p.getValue());
+            int nsplit=0;
+            for (LineString splitted : splitSegment(newLineString, distance, theGeometryFactory)) {
+                Polygon thePolygon = (Polygon) splitted.buffer(distance, _quadrantSegments, _capStyle);
+                MultiPolygon theMultiPolygon = new MultiPolygon(new Polygon[]{thePolygon}, thePolygon.getFactory());
+                fb.reset();
+                for (Property p : feature.getProperties()) {
+                    if (!p.getName().getLocalPart().equalsIgnoreCase("geometry")) {
+                        fb.set(p.getName().getLocalPart(), p.getValue());
+                    }
                 }
+                fb.set("the_geom", theMultiPolygon);
+                featuresList.add(fb.buildFeature(feature.getID() + "." + x + "."+(++nsplit)));
             }
-            fb.set("the_geom", theMultiPolygon);
-            featuresList.add(fb.buildFeature(feature.getID() + "." + x));
         }
         return featuresList;
     }
 
+    static List<LineString> splitSegment(LineString newLineString, Double distance, GeometryFactory theGeometryFactory) {
+        List<LineString> ret = new ArrayList();
+        if (newLineString.getLength()>(distance*2)) {
+            LineString first = theGeometryFactory.createLineString(new Coordinate[]{ newLineString.getStartPoint().getCoordinate(), newLineString.getCentroid().getCoordinate()});            
+            LineString last = theGeometryFactory.createLineString(new Coordinate[]{ newLineString.getCentroid().getCoordinate(), newLineString.getEndPoint().getCoordinate()});
+            ret.addAll(splitSegment(first, distance, theGeometryFactory));
+            ret.addAll(splitSegment(last, distance, theGeometryFactory));
+        } else {
+            ret.add(newLineString);
+        }
+        return ret;
+    }
+    
     static SimpleFeature buffer(SimpleFeatureBuilder fb, SimpleFeature feature, Point theGeometry, Double distance, Integer quadrantSegments, Integer capStyle) {
         int _quadrantSegments = quadrantSegments == null ? 10 : quadrantSegments.intValue();
         int _capStyle = capStyle == null ? BufferParameters.CAP_ROUND : capStyle.intValue();
