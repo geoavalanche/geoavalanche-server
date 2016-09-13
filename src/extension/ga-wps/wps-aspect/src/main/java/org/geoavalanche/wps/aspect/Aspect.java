@@ -14,12 +14,21 @@ import es.unex.sextante.morphometry.aspect.AspectAlgorithm;
 import es.unex.sextante.outputs.FileOutputChannel;
 import es.unex.sextante.outputs.Output;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Logger;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.coverage.grid.io.GridFormatFinder;
+import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
 import org.geotools.coverage.processing.CoverageProcessor;
+import org.geotools.factory.Hints;
+import org.geotools.gce.geotiff.GeoTiffFormat;
+import org.geotools.gce.geotiff.GeoTiffWriteParams;
+import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.process.factory.DescribeParameter;
@@ -27,6 +36,8 @@ import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.process.factory.StaticMethodsProcessFactory;
 import org.geotools.text.Text;
+import org.opengis.coverage.grid.GridCoverageWriter;
+import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValueGroup;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
@@ -89,14 +100,69 @@ public class Aspect extends StaticMethodsProcessFactory<Aspect> {
 
         //return (GridCoverage2D) PROCESSOR.doOperation(param);
         
-        GridCoverage2D cropCov = (GridCoverage2D) PROCESSOR.doOperation(param);
-        LOG.info("cropCov="+cropCov);
+        GridCoverage2D cropped = (GridCoverage2D) PROCESSOR.doOperation(param);
+        LOG.info("cropped Coverage="+cropped);
         
+        //Write coverage to file /tmp/Aspect/xxx.tiff
+        //final File writedir = new File(new StringBuilder("/tmp").append(File.separatorChar).append(Slope.class.getSimpleName()).toString());
+        Path writedir = Paths.get(new StringBuilder("/tmp").append(File.separatorChar).append(Aspect.class.getSimpleName()).toString());
+        LOG.info("write directory="+writedir.toString());
+        //Care to create directory
+        //LOG.info("writedir is a Directory? "+writedir.isDirectory());
+        //LOG.info("writedir exists? "+writedir.isDirectory());
+        //if (!writedir.exists()) {
+        if (!Files.exists(writedir)) {
+        
+            //writedir.mkdirs();
+            try {
+                Files.createDirectories(writedir);
+            } catch (IOException e) {
+                //fail to create directory
+                e.printStackTrace();
+            }
+            
+        }
+        //final GeoTiffFormat format = new GeoTiffFormat();
+        
+        //final GeoTiffWriteParams wp = new GeoTiffWriteParams();
+        //wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+        //wp.setCompressionType("LZW");
+        //wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
+        //wp.setTiling(512, 512);
+        
+        //final ParameterValueGroup writerParams = format.getWriteParameters();
+        //writerParams.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString())
+        //            .setValue(wp);
+
+        //String cropFileName = new StringBuilder(writedir.getAbsolutePath()).append(File.separatorChar).append(cropped.getName().toString()).append(".tiff").toString();
+        String cropFileName = new StringBuilder(writedir.toAbsolutePath().toString()).append(File.separatorChar).append(cropped.getName().toString()).append(".tiff").toString();
+        LOG.info("crop filename="+cropFileName);
+        final File writeFile = new File(cropFileName);
+        LOG.info("write file="+writeFile.toString());
+        //final GridCoverageWriter writer = format.getWriter(writeFile, new Hints(Hints.CRS, cropped.getCoordinateReferenceSystem()));
+        
+        //GeoTiffWriter writer = new GeoTiffWriter(cropped, new Hints(Hints.CRS, cropped.getCoordinateReferenceSystem()));
+//        try {
+//            writer.write(cropped, (GeneralParameterValue[]) writerParams.values().toArray(new GeneralParameterValue[1]));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                writer.dispose();
+//            } catch (Throwable e) {
+//               e.printStackTrace(); 
+//            }
+//        }
+        
+        writeToGeotiff(cropped, cropFileName);        
         /** Add a static coverage */
         
-        GridCoverage2D lCov = getLocalCoverage("result.tiff");
-         
+        //static file
+        //GridCoverage2D lCov = getLocalCoverage("result.tiff");
         
+        //
+        GridCoverage2D lCov = getLocalCoverage(writeFile.getName());
+        LOG.info("lcov="+lCov);
         
         /*
          * Initialize the library.
@@ -187,11 +253,29 @@ public class Aspect extends StaticMethodsProcessFactory<Aspect> {
     
     static GridCoverage2D getLocalCoverage(String filename) throws Exception {
 
-        File file = new File("/tmp/"+filename);
+        File file = new File("/tmp"+File.separatorChar+Aspect.class.getSimpleName()+File.separatorChar+filename);
+        LOG.info("geotiff file to read "+file.toString());
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
         GridCoverage2DReader reader = format.getReader(file);
         GridCoverage2D coverage = reader.read(null);
         LOG.info("coverage=" + coverage);
         return coverage;
+    }
+    
+    //write to geotiff
+    static void writeToGeotiff(GridCoverage2D cov, String fileName) {
+        try {
+            GeoTiffWriteParams wp = new GeoTiffWriteParams();
+            wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+            wp.setCompressionType("LZW");
+            ParameterValueGroup params = new GeoTiffFormat().getWriteParameters();
+            params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
+            File wfile = new File(fileName);
+            LOG.info("wfile="+wfile);
+            new GeoTiffWriter(wfile).write(cov, (GeneralParameterValue[]) params.values().toArray(new GeneralParameterValue[1]));
+        } catch (Exception e) {
+            LOG.severe("exception while writing geotiff.");
+            e.printStackTrace();
+        }
     }
 }
