@@ -31,6 +31,7 @@
     <module>wps-snowpack</module>
     <module>wps-aspect</module>
     <module>wps-dangerindex</module>
+    <module>wps-curvature</module>
   </modules>
 
 </project>
