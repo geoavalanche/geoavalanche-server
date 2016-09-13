@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.geoavalanche.wps.aspect;
+package org.geoavalanche.wps.curvature;
 
 import junit.framework.TestCase;
 import com.vividsolutions.jts.geom.Geometry;
@@ -13,9 +13,9 @@ import org.geotools.coverage.grid.GridCoverage2D;
  *
  * @author geobart
  */
-public class AspectIT extends TestCase {
+public class CurvatureIT extends TestCase {
     
-    public AspectIT(String testName) {
+    public CurvatureIT(String testName) {
         super(testName);
     }
     
@@ -30,15 +30,16 @@ public class AspectIT extends TestCase {
     }
 
     /**
-     * Test of Aspect method, of class Aspect.
+     * Test of Curvature method, of class Curvature.
      */
-    public void testAspect() throws Exception {
-        System.out.println("Aspect");
+    public void testCurvature() throws Exception {
+        System.out.println("Curvature");
         GridCoverage2D dem = null;
         Geometry geomShape = null;
-        Aspect.Aspect(dem, geomShape);
+        Curvature.Curvature(dem, geomShape);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }
     
 }
+

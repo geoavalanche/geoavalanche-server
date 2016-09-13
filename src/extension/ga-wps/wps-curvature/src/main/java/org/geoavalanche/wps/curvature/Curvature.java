@@ -1,4 +1,4 @@
-package org.geoavalanche.wps.aspect;
+package org.geoavalanche.wps.curvature;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryCollection;
@@ -10,7 +10,7 @@ import es.unex.sextante.dataObjects.IRasterLayer;
 import es.unex.sextante.exceptions.GeoAlgorithmExecutionException;
 import org.geoserver.wps.sextante.GTOutputFactory;
 import org.geoserver.wps.sextante.GTRasterLayer;
-import es.unex.sextante.morphometry.aspect.AspectAlgorithm;
+import es.unex.sextante.morphometry.curvatures.CurvaturesAlgorithm;
 import es.unex.sextante.outputs.FileOutputChannel;
 import es.unex.sextante.outputs.Output;
 import java.io.File;
@@ -42,12 +42,12 @@ import org.opengis.parameter.ParameterValueGroup;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Aspect
+ * Curvature
  *
  */
-public class Aspect extends StaticMethodsProcessFactory<Aspect> {
+public class Curvature extends StaticMethodsProcessFactory<Curvature> {
     
-    private static final Logger LOG = Logger.getLogger(Aspect.class.getName());
+    private static final Logger LOG = Logger.getLogger(Curvature.class.getName());
     private static final CoverageProcessor PROCESSOR = CoverageProcessor.getInstance();
     public static final String GEOAVALANCHE_NAMESPACE = "geoavalanche";
     
@@ -59,16 +59,15 @@ public class Aspect extends StaticMethodsProcessFactory<Aspect> {
      * data objects (DataStore and GridCoverage)
      */
     private static OutputFactory outputFactory = new GTOutputFactory();
-    private static int method = AspectAlgorithm.METHOD_ZEVENBERGEN;
-    private static int unit = AspectAlgorithm.UNITS_DEGREES;
+    private static String method = CurvaturesAlgorithm.METHOD;
     
-    public Aspect() {
-        super(Text.text("GeoAvalanche"), GEOAVALANCHE_NAMESPACE, Aspect.class);
+    public Curvature() {
+        super(Text.text("GeoAvalanche"), GEOAVALANCHE_NAMESPACE, Curvature.class);
     }
     
-    @DescribeProcess(title = "Aspect", description = "Calculate aspects in a shape")
-    @DescribeResult(description = "Raster result with aspects")
-    public static GridCoverage2D Aspect (
+    @DescribeProcess(title = "Curvature", description = "Calculate curvatures in a shape")
+    @DescribeResult(description = "Raster result with curvatures")
+    public static GridCoverage2D Curvature (
             @DescribeParameter(name = "dem", description = "DEM coverage") GridCoverage2D dem,
             @DescribeParameter(name = "shape", description = "Shape") Geometry geomShape        
     ) throws Exception {        
@@ -103,9 +102,9 @@ public class Aspect extends StaticMethodsProcessFactory<Aspect> {
         GridCoverage2D cropped = (GridCoverage2D) PROCESSOR.doOperation(param);
         LOG.info("cropped Coverage="+cropped);
         
-        //Write coverage to file /tmp/Aspect/xxx.tiff
+        //Write coverage to file /tmp/Curvature/xxx.tiff
         //final File writedir = new File(new StringBuilder("/tmp").append(File.separatorChar).append(Curvature.class.getSimpleName()).toString());
-        Path writedir = Paths.get(new StringBuilder("/tmp").append(File.separatorChar).append(Aspect.class.getSimpleName()).toString());
+        Path writedir = Paths.get(new StringBuilder("/tmp").append(File.separatorChar).append(Curvature.class.getSimpleName()).toString());
         LOG.info("write directory="+writedir.toString());
         //Care to create directory
         //LOG.info("writedir is a Directory? "+writedir.isDirectory());
@@ -176,8 +175,8 @@ public class Aspect extends StaticMethodsProcessFactory<Aspect> {
         //raster.create(cropCov);
         raster.create(lCov);
         LOG.info("raster = "+raster);        
-        IRasterLayer aspect = getAspect(raster,method,unit);   
-        GridCoverage2D ret = (GridCoverage2D)aspect.getBaseDataObject();
+        IRasterLayer curvature = getCurvature(raster,method);   
+        GridCoverage2D ret = (GridCoverage2D)curvature.getBaseDataObject();
         LOG.info("ret="+ret);            
 
         return ret;
@@ -185,31 +184,28 @@ public class Aspect extends StaticMethodsProcessFactory<Aspect> {
 
     
     /**
-     * Returns a aspect layer created from the passed DEM
+     * Returns a curvature layer created from the passed DEM
      *
      * @param dem the DEM
-     * @return a aspect layer
+     * @return a curvature layer
      * @throws GeoAlgorithmExecutionException
      */
-    private static IRasterLayer getAspect(IRasterLayer dem, int method, int unit)
+    private static IRasterLayer getCurvature(IRasterLayer dem, String method)
             throws GeoAlgorithmExecutionException {
 
         /*
-         * Instantiate the AspectAlgorithm class
+         * Instantiate the CurvatureAlgorithm class
          */
-        AspectAlgorithm alg = new AspectAlgorithm();
+        CurvaturesAlgorithm alg = new CurvaturesAlgorithm();
 
         /*
          * The first thing we have to do is to set up the input parameters
          */
         ParametersSet params = alg.getParameters();
-        params.getParameter(AspectAlgorithm.DEM).setParameterValue(dem);
+        params.getParameter(CurvaturesAlgorithm.DEM).setParameterValue(dem);
 
         //Zevenberger & Thorne method
-        params.getParameter(AspectAlgorithm.METHOD).setParameterValue(method);
-
-        //Resulting values in radians
-        params.getParameter(AspectAlgorithm.UNITS).setParameterValue(unit);
+        params.getParameter(CurvaturesAlgorithm.METHOD).setParameterValue(method);
 
         /*
          *  This algorithm will generate a new raster layer.
@@ -223,7 +219,7 @@ public class Aspect extends StaticMethodsProcessFactory<Aspect> {
          * using a temporary filename.
          */
         OutputObjectsSet outputs = alg.getOutputObjects();
-        Output out = outputs.getOutput(AspectAlgorithm.ASPECT);
+        Output out = outputs.getOutput(CurvaturesAlgorithm.GLOBAL);
         out.setOutputChannel(new FileOutputChannel("xxx.tif"));
 
         /*
@@ -245,15 +241,15 @@ public class Aspect extends StaticMethodsProcessFactory<Aspect> {
         /*
          * Now the result can be taken from the output container
          */
-        IRasterLayer aspect = (IRasterLayer) out.getOutputObject();
+        IRasterLayer curvature = (IRasterLayer) out.getOutputObject();
 
-        return aspect;
+        return curvature;
 
     }  
     
     static GridCoverage2D getLocalCoverage(String filename) throws Exception {
 
-        File file = new File("/tmp"+File.separatorChar+Aspect.class.getSimpleName()+File.separatorChar+filename);
+        File file = new File("/tmp"+File.separatorChar+Curvature.class.getSimpleName()+File.separatorChar+filename);
         LOG.info("geotiff file to read "+file.toString());
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
         GridCoverage2DReader reader = format.getReader(file);
