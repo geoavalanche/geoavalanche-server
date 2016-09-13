@@ -27,6 +27,7 @@
 
   <modules>
     <module>ga-wps</module>
+    <module>ga-algs</module>
   </modules>
   
 </project>

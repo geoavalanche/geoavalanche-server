@@ -98,6 +98,34 @@ Remove the artifacts created by default from maven archetype:
 	cd ga-wps
 	rm -rf src
 
+Add Algorithm modules
+---------------------
+
+All the Algorithms by GeoAvalanche are developed under the artifact ga-algs according to what is doing in the GeoServer project.
+
+.. code-block:: console
+
+    cd extension
+    mvn -B archetype:generate \
+		-DartifactId=ga-algs \
+		-DgroupId=org.geoavalanche.extension \
+		-Dname="GeoAvalanche Algorithms parent" \
+		-DmoduleName=ga-algs \
+		-DmoduleDescription="GeoAvalanche Algorithms module"
+
+Add the packaging property to the mode *pom*:
+
+.. code-block:: xml
+ 
+     <packaging>pom</packaging>
+
+Remove the artifacts created by default from maven archetype:
+
+.. code-block:: console
+
+	cd ga-algs
+	rm -rf src
+
 Create the WPS GeoAvalanche crowdsourcing module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
