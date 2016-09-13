@@ -98,33 +98,25 @@ Remove the artifacts created by default from maven archetype:
 	cd ga-wps
 	rm -rf src
 
-Add Algorithm modules
----------------------
-
-All the Algorithms by GeoAvalanche are developed under the artifact ga-algs according to what is doing in the GeoServer project.
+Create the GeoAvalanche Avalanche Algorithms module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: console
 
-    cd extension
+    cd ga-algs
     mvn -B archetype:generate \
-		-DartifactId=ga-algs \
+		-DartifactId=alg-avalanche \
 		-DgroupId=org.geoavalanche.extension \
-		-Dname="GeoAvalanche Algorithms parent" \
-		-DmoduleName=ga-algs \
-		-DmoduleDescription="GeoAvalanche Algorithms module"
+		-Dname="GeoAvalanche Algorithms for avalanche" \
+		-Dpackage=org.geoavalanche.alg.avalanche \
+		-DmoduleName=alg-avalanche \
+		-DmoduleDescription="GeoAvalanche Algorithms for avalanche"
 
-Add the packaging property to the mode *pom*:
+Add the packaging property to the mode *jar*:
 
 .. code-block:: xml
  
-     <packaging>pom</packaging>
-
-Remove the artifacts created by default from maven archetype:
-
-.. code-block:: console
-
-	cd ga-algs
-	rm -rf src
+    <packaging>jar</packaging>
 
 Create the WPS GeoAvalanche crowdsourcing module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -279,6 +271,34 @@ Add the following dependencies to the pom of **main** artifact:
       <artifactId>wps-dangerindex</artifactId>
       <version>${geoavalanche.version}</version>
     </dependency>
+
+Add Algorithm modules
+---------------------
+
+All the Algorithms by GeoAvalanche are developed under the artifact ga-algs according to what is doing in the GeoServer project.
+
+.. code-block:: console
+
+    cd extension
+    mvn -B archetype:generate \
+		-DartifactId=ga-algs \
+		-DgroupId=org.geoavalanche.extension \
+		-Dname="GeoAvalanche Algorithms parent" \
+		-DmoduleName=ga-algs \
+		-DmoduleDescription="GeoAvalanche Algorithms module"
+
+Add the packaging property to the mode *pom*:
+
+.. code-block:: xml
+ 
+     <packaging>pom</packaging>
+
+Remove the artifacts created by default from maven archetype:
+
+.. code-block:: console
+
+	cd ga-algs
+	rm -rf src
 
 How to build
 ------------
