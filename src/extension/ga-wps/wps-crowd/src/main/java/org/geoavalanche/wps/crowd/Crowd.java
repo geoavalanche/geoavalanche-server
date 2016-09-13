@@ -13,7 +13,6 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 import java.io.StringWriter;
-import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -69,12 +68,12 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         try {
             mongoip=System.getenv().get("MONGOIP");
         } catch (Exception e) {
-            LOG.severe(e.toString());
+            LOG.severe("env MONGOIP is not set");
         }
         try {            
             mongoport=Integer.parseInt(System.getenv().get("MONGOPORT"));
         } catch (Exception e) {
-            LOG.severe(e.toString());
+            LOG.severe("env MONGOPORT is not set");
         }
         
         if (sourceCRS == null) {
@@ -118,7 +117,7 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         return ret;
     }
 
-    static long[] getNumIncidentsOfGeometry(List<Incidents> incidents, Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {
+    static String getNumIncidentsOfGeometry(List<Incidents> incidents, Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {
         boolean lenient = true;
         Geometry theGeometry4326 = theGeometry;
         if (sourceCRS!=CRS.decode("EPSG:4326")) {
@@ -148,11 +147,11 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
                 _incidents++;
             }
         }        
-        long[] ret = {_incidents, _incidentsInLastYear, _incidentsInLastMonth, _incidentsInLastWeek};
+        String ret = _incidents+","+_incidentsInLastYear+","+_incidentsInLastMonth+","+_incidentsInLastWeek;
         return ret;        
     }
 
-    static long[] getNumIncidentsOfGeometry(Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {
+    static String getNumIncidentsOfGeometry(Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {
         long _incidents = 0;
         long _incidentsInLastWeek = 0;
         long _incidentsInLastMonth = 0;
@@ -191,7 +190,7 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
             _incidents++;
         }
         mongoClient.close();
-        long[] ret = {_incidents, _incidentsInLastYear, _incidentsInLastMonth, _incidentsInLastWeek};
+        String ret = _incidents+","+_incidentsInLastYear+","+_incidentsInLastMonth+","+_incidentsInLastWeek;
         return ret;
     }
 
@@ -237,7 +236,7 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
                theProperties.put(p.getName().getLocalPart(), p.getType().getBinding());
             }
         }
-        theProperties.put("incidents", Long.class);
+        theProperties.put("incidents", String.class);
 
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName(featureCollection.getSchema().getName());

@@ -158,6 +158,25 @@ Add the packaging property to the mode *jar*:
  
     <packaging>jar</packaging>
 
+Create the WPS GeoAvalanche curvature module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    cd ga-wps
+    mvn -B archetype:generate \
+		-DartifactId=wps-curvature \
+		-DgroupId=org.geoavalanche.extension \
+		-Dname="GeoAvalanche Web Processing Service for curvatures" \
+		-Dpackage=org.geoavalanche.wps.curvature \
+		-DmoduleName=wps-curvature \
+		-DmoduleDescription="GeoAvalanche WPS module for curvatures"
+
+Add the packaging property to the mode *jar*:
+
+.. code-block:: xml
+ 
+    <packaging>jar</packaging>
 
 Create the WPS GeoAvalanche snowpack module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

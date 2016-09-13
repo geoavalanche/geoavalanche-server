@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import java.util.HashMap;
+import java.util.StringTokenizer;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -40,19 +41,25 @@ public class DangerIndex extends StaticMethodsProcessFactory<DangerIndex> {
 
         SimpleFeatureIterator itr = featureCollection.features();
         while (itr.hasNext()) {
-            long[] incidents = {0,0,0,0};
+            String incidents = null;
             SimpleFeature feature = itr.next();
             fb.reset();
             for (Property p : feature.getProperties()) {
                 fb.set(p.getName().getLocalPart(), p.getValue());
                 if (p.getName().getLocalPart().equalsIgnoreCase("incidents")) {
-                    incidents = (long[])p.getValue();
+                    incidents = (String)p.getValue();
                 }
             }
-            if (incidents[0] == 1) {
-                fb.set("dangerindex", "1");
-            } else if (incidents[0] > 1) {
-                fb.set("dangerindex", "2");
+            if (incidents!=null) {
+                StringTokenizer st = new StringTokenizer(incidents, ",");
+                int total = Integer.parseInt(st.nextToken());
+                if (total == 1) {
+                    fb.set("dangerindex", "1");
+                } else if (total > 1) {
+                    fb.set("dangerindex", "2");
+                } else {
+                    fb.set("dangerindex", "0");
+                }
             } else {
                 fb.set("dangerindex", "0");
             }

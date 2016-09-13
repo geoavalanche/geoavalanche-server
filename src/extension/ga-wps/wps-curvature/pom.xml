@@ -1,25 +1,26 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
-
+  
     <parent>
         <groupId>org.geoavalanche.extension</groupId>
         <artifactId>ga-wps</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-
+  
     <groupId>org.geoavalanche.extension</groupId>
-    <artifactId>wps-slope</artifactId>
+    <artifactId>wps-curvature</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>wps-slope</name>
-
-    <url>http://geoavalanche.org</url>
-
+    <name>wps-curvature</name>
+  
+    <url>http://maven.apache.org</url>
+  
     <properties>
         <sextante.version>1.0</sextante.version>
     </properties>
- 
+  
     <repositories>
         <repository>
             <id>Main 52north releases repo</id>
@@ -39,7 +40,7 @@
             <url>http://repo.boundlessgeo.com/main</url>
         </repository>
     </repositories>
-
+  
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -81,7 +82,7 @@
             <artifactId>libMath</artifactId>
             <version>${sextante.version}</version>
         </dependency>
-      
+
         <!-- Sextante supplemental dependencies -->
         <dependency>
             <groupId>gov.nist.math</groupId>
@@ -103,13 +104,13 @@
             <artifactId>bsh</artifactId>
             <version>2.0b4</version>
         </dependency>
-    
+
         <!-- <dependency>
           <groupId>org.geobricks</groupId>
           <artifactId>GeoBricks</artifactId>
           <version>0.1</version>
         </dependency> -->
-        
+
         <!-- <dependency>
             <groupId>org.geoserver.extension</groupId>
             <artifactId>gs-wps-core</artifactId>
@@ -123,4 +124,5 @@
             <type>jar</type>
         </dependency>
     </dependencies>
+  
 </project>
