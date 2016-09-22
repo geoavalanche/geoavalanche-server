@@ -166,6 +166,7 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         slopeTable.setValueAt(-9999.0, 5, 1);
         slopeTable.setValueAt(0.0, 5, 2);
         slopeTable.setValueAt(0.0, 5, 3);
+        LOG.info("slopeTable is "+slopeTable.toString());
         
         //ASPECT CLASSES {0.0,45,3},{45.0,135.0,2},{135.0,315.0,1},{315.0,360.0,3}
         FixedTableModel aspectTable = new FixedTableModel(cols, 5, true);
@@ -186,12 +187,13 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         aspectTable.setValueAt(360.0, 4, 2);
         aspectTable.setValueAt(3.0, 4, 3);
         //nodata
-        slopeTable.setValueAt(-9999.0, 5, 1);
-        slopeTable.setValueAt(0.0, 5, 2);
-        slopeTable.setValueAt(0.0, 5, 3);
+        aspectTable.setValueAt(-9999.0, 5, 1);
+        aspectTable.setValueAt(0.0, 5, 2);
+        aspectTable.setValueAt(0.0, 5, 3);
+        LOG.info("aspectTable is "+aspectTable.toString());
         
         //CURVATURE CLASSES {0.0,1.0,3},{-1.0,0.0,1}
-        FixedTableModel curvTable = new FixedTableModel(cols, 2, true);
+        FixedTableModel curvTable = new FixedTableModel(cols, 3, true);
         //CONCAVE
         curvTable.setValueAt(0.0, 1, 1);
         curvTable.setValueAt(1.0, 1, 2);
@@ -201,9 +203,10 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         curvTable.setValueAt(0.0, 2, 2);
         curvTable.setValueAt(1.0, 2, 3);
         //nodata
-        slopeTable.setValueAt(-9999.0, 3, 1);
-        slopeTable.setValueAt(0.0, 3, 2);
-        slopeTable.setValueAt(0.0, 3, 3);
+        curvTable.setValueAt(-9999.0, 3, 1);
+        curvTable.setValueAt(0.0, 3, 2);
+        curvTable.setValueAt(0.0, 3, 3);
+        LOG.info("curvTable is "+curvTable.toString());
         
         //LAND CLASSES FROM COPERNICUS {,,},{,,}
         FixedTableModel lclassTable = new FixedTableModel(cols, 16, true);
@@ -280,6 +283,7 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         lclassTable.setValueAt(412.0, 16, 1);
         lclassTable.setValueAt(999.0, 16, 2);
         lclassTable.setValueAt(0.0, 16, 3);
+        LOG.info("lclassTable is "+lclassTable.toString());
         
         switch (type) {
             case SLOPE:
