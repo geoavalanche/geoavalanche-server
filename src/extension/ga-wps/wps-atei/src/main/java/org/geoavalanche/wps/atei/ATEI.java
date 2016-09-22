@@ -4,7 +4,7 @@ package org.geoavalanche.wps.atei;
  * Hello world!
  *
  */
-public class App 
+public class ATEI 
 {
     public static void main( String[] args )
     {
