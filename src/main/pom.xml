@@ -45,6 +45,11 @@
       <artifactId>wps-dangerindex</artifactId>
       <version>${geoavalanche.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-atei</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
     
     <!-- GEOSERVER -->
     <dependency>

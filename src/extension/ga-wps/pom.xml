@@ -32,6 +32,7 @@
     <module>wps-aspect</module>
     <module>wps-dangerindex</module>
     <module>wps-curvature</module>
+    <module>wps-atei</module>
   </modules>
 
 </project>

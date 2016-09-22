@@ -198,6 +198,27 @@ Add the packaging property to the mode *jar*:
  
     <packaging>jar</packaging>
 
+Create the WPS GeoAvalanche ATEI module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: console
+
+    cd ga-wps
+    mvn -B archetype:generate \
+		-DartifactId=wps-atei \
+		-DgroupId=org.geoavalanche.extension \
+		-Dname="GeoAvalanche Web Processing Service for ATEI" \
+		-Dpackage=org.geoavalanche.wps.atei \
+		-DmoduleName=wps-atei \
+		-DmoduleDescription="GeoAvalanche WPS module for ATEI"
+
+Add the packaging property to the mode *jar*:
+
+.. code-block:: xml
+ 
+    <packaging>jar</packaging>
+
+
 Create the WPS GeoAvalanche snowpack module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -269,6 +290,11 @@ Add the following dependencies to the pom of **main** artifact:
     <dependency>
       <groupId>org.geoavalanche.extension</groupId>
       <artifactId>wps-dangerindex</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-atei</artifactId>
       <version>${geoavalanche.version}</version>
     </dependency>
 
