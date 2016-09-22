@@ -48,12 +48,21 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+    
     <dependency>
       <groupId>es.unex.sextante</groupId>
       <artifactId>sextante</artifactId>
       <version>1.0</version>
       <type>jar</type>
     </dependency>
+    
+    <dependency>
+      <groupId>es.unex.sextante</groupId>
+      <artifactId>sextante_algorithms</artifactId>
+      <version>1.0</version>
+      <type>jar</type>
+    </dependency>
+    
   </dependencies>
   
 </project>
