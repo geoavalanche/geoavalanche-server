@@ -117,6 +117,14 @@
             <version>${geoserver.version}</version>
             <type>jar</type>
         </dependency> -->
+        
+        <dependency>
+            <groupId>org.geoavalanche.extension</groupId>
+            <artifactId>alg-avalanche</artifactId>
+            <version>${geoavalanche.version}</version>
+            <type>jar</type>
+        </dependency>
+        
         <dependency>
             <groupId>org.geoserver.community</groupId>
             <artifactId>gs-wps-sextante</artifactId>
