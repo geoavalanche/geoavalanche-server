@@ -50,6 +50,11 @@
       <artifactId>wps-atei</artifactId>
       <version>${geoavalanche.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>alg-avalanche</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
     
     <!-- GEOSERVER -->
     <dependency>
