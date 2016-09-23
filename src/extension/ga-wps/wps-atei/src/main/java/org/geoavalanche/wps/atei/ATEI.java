@@ -500,7 +500,7 @@ public class ATEI extends StaticMethodsProcessFactory<ATEI> {
     
     static GridCoverage2D getLocalCoverage(String filename) throws Exception {
 
-        File file = new File("/tmp"+File.separatorChar+AvalancheTerrainExposureAlgorithm.class.getSimpleName()+File.separatorChar+filename);
+        File file = new File("/tmp"+File.separatorChar+ATEI.class.getSimpleName()+File.separatorChar+filename);
         LOG.info("geotiff file to read "+file.toString());
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
         GridCoverage2DReader reader = format.getReader(file);
