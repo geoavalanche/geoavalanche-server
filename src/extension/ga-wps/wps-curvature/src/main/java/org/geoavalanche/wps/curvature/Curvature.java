@@ -220,7 +220,7 @@ public class Curvature extends StaticMethodsProcessFactory<Curvature> {
          * using a temporary filename.
          */
         OutputObjectsSet outputs = alg.getOutputObjects();
-        Output out = outputs.getOutput(CurvaturesAlgorithm.CLASS);
+        Output out = outputs.getOutput(CurvaturesAlgorithm.GLOBAL);
 
         /*
          * Execute the algorithm. We use no task monitor,
