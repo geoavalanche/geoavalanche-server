@@ -144,7 +144,7 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         String[] cols = {"Min_value","Max_value","New_value"};
         
         //SLOPE CLASSES {0,25,1},{25,45,3},{45,60,1},{60,90,0}
-        FixedTableModel slopeTable = new FixedTableModel(cols, 5, true);
+        FixedTableModel slopeTable = new FixedTableModel(cols, 6, true);
         //first row
         slopeTable.setValueAt(0.0, 1, 1);
         slopeTable.setValueAt(25.0, 1, 2);
@@ -165,10 +165,14 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         slopeTable.setValueAt(-9999.0, 5, 1);
         slopeTable.setValueAt(0.0, 5, 2);
         slopeTable.setValueAt(0.0, 5, 3);
+        //more nodata
+        slopeTable.setValueAt(90.0, 6, 1);
+        slopeTable.setValueAt(9999.0, 6, 2);
+        slopeTable.setValueAt(0.0, 6, 3);
         LOG.info("slopeTable is "+slopeTable.toString());
         
         //ASPECT CLASSES {0.0,45,3},{45.0,135.0,2},{135.0,315.0,1},{315.0,360.0,3}
-        FixedTableModel aspectTable = new FixedTableModel(cols, 5, true);
+        FixedTableModel aspectTable = new FixedTableModel(cols, 6, true);
         //NORTH
         aspectTable.setValueAt(0.0, 1, 1);
         aspectTable.setValueAt(45.0, 1, 2);
@@ -189,10 +193,14 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         aspectTable.setValueAt(-9999.0, 5, 1);
         aspectTable.setValueAt(0.0, 5, 2);
         aspectTable.setValueAt(0.0, 5, 3);
+        //more nodata
+        aspectTable.setValueAt(360.0, 6, 1);
+        aspectTable.setValueAt(9999.0, 6, 2);
+        aspectTable.setValueAt(0.0, 6, 3);
         LOG.info("aspectTable is "+aspectTable.toString());
         
         //CURVATURE CLASSES {0.0,1.0,3},{-1.0,0.0,1}
-        FixedTableModel curvTable = new FixedTableModel(cols, 3, true);
+        FixedTableModel curvTable = new FixedTableModel(cols, 4, true);
         //CONCAVE
         curvTable.setValueAt(0.0, 1, 1);
         curvTable.setValueAt(1.0, 1, 2);
@@ -203,8 +211,13 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         curvTable.setValueAt(1.0, 2, 3);
         //nodata
         curvTable.setValueAt(-9999.0, 3, 1);
-        curvTable.setValueAt(0.0, 3, 2);
+        curvTable.setValueAt(-1.0, 3, 2);
         curvTable.setValueAt(0.0, 3, 3);
+        //more nodata
+        curvTable.setValueAt(1.0, 4, 1);
+        curvTable.setValueAt(9999.0, 4, 2);
+        curvTable.setValueAt(0.0, 4, 3);
+        
         LOG.info("curvTable is "+curvTable.toString());
         
         //LAND CLASSES FROM COPERNICUS {,,},{,,}
