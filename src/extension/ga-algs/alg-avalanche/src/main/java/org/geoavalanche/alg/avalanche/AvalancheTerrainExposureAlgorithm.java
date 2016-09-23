@@ -220,81 +220,89 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         
         LOG.info("curvTable is "+curvTable.toString());
         
-        //LAND CLASSES FROM COPERNICUS {,,},{,,}
+        //LAND CLASSES FROM COPERNICUS {,,},{,,}, see clc_legend_ATEI
         FixedTableModel lclassTable = new FixedTableModel(cols, 16, true);
         //Continuous urban fabric/Discontinuous urban fabric/Industrial or commercial units
         lclassTable.setValueAt(0.0, 1, 1);
-        lclassTable.setValueAt(121.0, 1, 2);
+        lclassTable.setValueAt(3.0, 1, 2);
         lclassTable.setValueAt(0.0, 1, 3);
         //Road and rail networks and associated land
-        lclassTable.setValueAt(121.0, 2, 1);
-        lclassTable.setValueAt(122.0, 2, 2);
+        lclassTable.setValueAt(3.0, 2, 1);
+        lclassTable.setValueAt(4.0, 2, 2);
         lclassTable.setValueAt(1.0, 2, 3);
         //Port areas/Airports/Mineral extraction sites/Dump sites/Construction sites/Green urban areas
         //Sport and leisure facilities/Non-irrigated arable land/Permanently irrigated land/Rice fields/
         //Vineyards/Fruit trees and berry plantations/Olive groves/
-        lclassTable.setValueAt(122.0, 3, 1);
-        lclassTable.setValueAt(223.0, 3, 2);
+        lclassTable.setValueAt(4.0, 3, 1);
+        lclassTable.setValueAt(17.0, 3, 2);
         lclassTable.setValueAt(0.0, 3, 3);
         //Pastures
-        lclassTable.setValueAt(223.0, 4, 1);
-        lclassTable.setValueAt(231.0, 4, 2);
+        lclassTable.setValueAt(17.0, 4, 1);
+        lclassTable.setValueAt(18.0, 4, 2);
         lclassTable.setValueAt(2.0, 4, 3);
         //Annual crops associated with permanent crops/Complex cultivation patterns/
-        lclassTable.setValueAt(231.0, 5, 1);
-        lclassTable.setValueAt(242.0, 5, 2);
+        lclassTable.setValueAt(18.0, 5, 1);
+        lclassTable.setValueAt(20.0, 5, 2);
         lclassTable.setValueAt(0.0, 5, 3);
         //Land principally occupied by agriculture with significant areas of natural vegetation/
         //Agro-forestry areas/Broad-leaved forest/Coniferous forest/Mixed forest
-        lclassTable.setValueAt(242.0, 6, 1);
-        lclassTable.setValueAt(313.0, 6, 2);
+        lclassTable.setValueAt(20.0, 6, 1);
+        lclassTable.setValueAt(25.0, 6, 2);
         lclassTable.setValueAt(1.0, 6, 3);
         //Natural grasslands
-        lclassTable.setValueAt(313.0, 7, 1);
-        lclassTable.setValueAt(321.0, 7, 2);
+        lclassTable.setValueAt(25.0, 7, 1);
+        lclassTable.setValueAt(26.0, 7, 2);
         lclassTable.setValueAt(3.0, 7, 3);
         //Moors and heathland
-        lclassTable.setValueAt(321.0, 8, 1);
-        lclassTable.setValueAt(322.0, 8, 2);
+        lclassTable.setValueAt(26.0, 8, 1);
+        lclassTable.setValueAt(27.0, 8, 2);
         lclassTable.setValueAt(2.0, 8, 3);
         //Sclerophyllous vegetation
-        lclassTable.setValueAt(322.0, 9, 1);
-        lclassTable.setValueAt(323.0, 9, 2);
+        lclassTable.setValueAt(27.0, 9, 1);
+        lclassTable.setValueAt(28.0, 9, 2);
         lclassTable.setValueAt(3.0, 9, 3);
         //Transitional woodland-shrub
-        lclassTable.setValueAt(323.0, 10, 1);
-        lclassTable.setValueAt(324.0, 10, 2);
+        lclassTable.setValueAt(28.0, 10, 1);
+        lclassTable.setValueAt(29.0, 10, 2);
         lclassTable.setValueAt(2.0, 10, 3);
         //Beaches - dunes - sands
-        lclassTable.setValueAt(324.0, 10, 1);
-        lclassTable.setValueAt(331.0, 10, 2);
+        lclassTable.setValueAt(29.0, 10, 1);
+        lclassTable.setValueAt(30.0, 10, 2);
         lclassTable.setValueAt(0.0, 10, 3);
         //Bare rocks
-        lclassTable.setValueAt(331.0, 11, 1);
-        lclassTable.setValueAt(332.0, 11, 2);
+        lclassTable.setValueAt(30.0, 11, 1);
+        lclassTable.setValueAt(31.0, 11, 2);
         lclassTable.setValueAt(2.0, 11, 3);
         //Sparsely vegetated areas
-        lclassTable.setValueAt(332.0, 12, 1);
-        lclassTable.setValueAt(333.0, 12, 2);
+        lclassTable.setValueAt(31.0, 12, 1);
+        lclassTable.setValueAt(32.0, 12, 2);
         lclassTable.setValueAt(3.0, 12, 3);
         //Burnt areas
-        lclassTable.setValueAt(333.0, 13, 1);
-        lclassTable.setValueAt(334.0, 13, 2);
+        lclassTable.setValueAt(32.0, 13, 1);
+        lclassTable.setValueAt(33.0, 13, 2);
         lclassTable.setValueAt(0.0, 13, 3);
         //Glaciers and perpetual snow
-        lclassTable.setValueAt(334.0, 14, 1);
-        lclassTable.setValueAt(335.0, 14, 2);
+        lclassTable.setValueAt(33.0, 14, 1);
+        lclassTable.setValueAt(34.0, 14, 2);
         lclassTable.setValueAt(3.0, 14, 3);
         //Inland marshes/Peat bogs/
-        lclassTable.setValueAt(335.0, 15, 1);
-        lclassTable.setValueAt(412.0, 15, 2);
+        lclassTable.setValueAt(34.0, 15, 1);
+        lclassTable.setValueAt(36.0, 15, 2);
         lclassTable.setValueAt(1.0, 15, 3);
         //Salt marshes/Salines/Intertidal flats/Water courses/Water bodies/Coastal lagoons
         //Estuaries/Sea and ocean/NODATA/UNCLASSIFIED LAND SURFACE/UNCLASSIFIED WATER BODIES
         //UNCLASSIFIED
-        lclassTable.setValueAt(412.0, 16, 1);
-        lclassTable.setValueAt(999.0, 16, 2);
+        lclassTable.setValueAt(36.0, 16, 1);
+        lclassTable.setValueAt(255.0, 16, 2);
         lclassTable.setValueAt(0.0, 16, 3);
+        //nodata
+        curvTable.setValueAt(-9999.0, 17, 1);
+        curvTable.setValueAt(0.0, 17, 2);
+        curvTable.setValueAt(0.0, 17, 3);
+        //more nodata
+        curvTable.setValueAt(255.0, 18, 1);
+        curvTable.setValueAt(9999.0, 18, 2);
+        curvTable.setValueAt(0.0, 18, 3);
         LOG.info("lclassTable is "+lclassTable.toString());
         
         switch (type) {
