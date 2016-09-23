@@ -208,7 +208,7 @@ public class Aspect extends StaticMethodsProcessFactory<Aspect> {
         //Zevenberger & Thorne method
         params.getParameter(AspectAlgorithm.METHOD).setParameterValue(method);
 
-        //Resulting values in radians
+        //Resulting values in degree
         params.getParameter(AspectAlgorithm.UNITS).setParameterValue(unit);
 
         /*
@@ -224,7 +224,6 @@ public class Aspect extends StaticMethodsProcessFactory<Aspect> {
          */
         OutputObjectsSet outputs = alg.getOutputObjects();
         Output out = outputs.getOutput(AspectAlgorithm.ASPECT);
-        out.setOutputChannel(new FileOutputChannel("xxx.tif"));
 
         /*
          * Execute the algorithm. We use no task monitor,
