@@ -37,6 +37,11 @@
     </dependency>
     <dependency>
       <groupId>org.geoavalanche.extension</groupId>
+      <artifactId>wps-curvature</artifactId>
+      <version>${geoavalanche.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geoavalanche.extension</groupId>
       <artifactId>wps-snowpack</artifactId>
       <version>${geoavalanche.version}</version>
     </dependency>
