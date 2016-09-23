@@ -2,6 +2,7 @@ package org.geoavalanche.wps.slope;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryCollection;
+import es.unex.sextante.core.AnalysisExtent;
 import es.unex.sextante.core.OutputFactory;
 import es.unex.sextante.core.OutputObjectsSet;
 import es.unex.sextante.core.ParametersSet;
@@ -176,7 +177,7 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
         //raster.create(cropCov);
         raster.create(lCov);
         LOG.info("raster = "+raster);        
-        IRasterLayer slope = getSlope(raster,method,unit);   
+        IRasterLayer slope = getSlope(raster,method,unit,raster.getLayerGridExtent());   
         GridCoverage2D ret = (GridCoverage2D)slope.getBaseDataObject();
         LOG.info("ret="+ret);            
 
@@ -191,13 +192,14 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
      * @return a slope layer
      * @throws GeoAlgorithmExecutionException
      */
-    private static IRasterLayer getSlope(IRasterLayer dem, int method, int unit)
+    private static IRasterLayer getSlope(IRasterLayer dem, int method, int unit, AnalysisExtent ext)
             throws GeoAlgorithmExecutionException {
 
         /*
          * Instantiate the SlopeAlgorithm class
          */
         SlopeAlgorithm alg = new SlopeAlgorithm();
+        alg.setAnalysisExtent(ext);
 
         /*
          * The first thing we have to do is to set up the input parameters
@@ -224,7 +226,6 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
          */
         OutputObjectsSet outputs = alg.getOutputObjects();
         Output out = outputs.getOutput(SlopeAlgorithm.SLOPE);
-        //out.setOutputChannel(new FileOutputChannel("xxx.tif"));
 
         /*
          * Execute the algorithm. We use no task monitor,
