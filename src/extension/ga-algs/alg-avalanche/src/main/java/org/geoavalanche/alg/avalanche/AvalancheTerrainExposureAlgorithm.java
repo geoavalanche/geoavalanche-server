@@ -141,7 +141,7 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         final int       METHOD_LOWER_THAN_OR_EQUAL  = ReclassifyAlgorithm.METHOD_LOWER_THAN_OR_EQUAL;
         
         
-        String[] cols = {"Min","Max","New"};
+        String[] cols = {"Min_value","Max_value","New_value"};
         
         //SLOPE CLASSES {0,25,1},{25,45,3},{45,60,1},{60,90,0}
         FixedTableModel slopeTable = new FixedTableModel(cols, 5, true);
