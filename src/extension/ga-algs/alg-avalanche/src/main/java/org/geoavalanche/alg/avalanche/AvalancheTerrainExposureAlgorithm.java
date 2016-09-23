@@ -9,7 +9,6 @@ import es.unex.sextante.exceptions.GeoAlgorithmExecutionException;
 import es.unex.sextante.exceptions.RepeatedParameterNameException;
 import es.unex.sextante.gridCategorical.reclassify.ReclassifyAlgorithm;
 import es.unex.sextante.parameters.FixedTableModel;
-import java.util.ArrayList;
 import java.util.logging.Logger;
 
 /**
