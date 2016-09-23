@@ -59,7 +59,8 @@ public class Curvature extends StaticMethodsProcessFactory<Curvature> {
      * data objects (DataStore and GridCoverage)
      */
     private static OutputFactory outputFactory = new GTOutputFactory();
-    private static String method = CurvaturesAlgorithm.METHOD;
+    //private static String method = CurvaturesAlgorithm.METHOD;
+    private static String method = "Fit_2_Degree_Polynom__Zevenbergen_&_Thorne_1987";
     
     public Curvature() {
         super(Text.text("GeoAvalanche"), GEOAVALANCHE_NAMESPACE, Curvature.class);
