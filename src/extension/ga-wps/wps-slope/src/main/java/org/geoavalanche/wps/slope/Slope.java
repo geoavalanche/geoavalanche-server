@@ -210,7 +210,7 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
         //Zevenberger & Thorne method
         params.getParameter(SlopeAlgorithm.METHOD).setParameterValue(method);
 
-        //Resulting values in radians
+        //Resulting values in degree
         params.getParameter(SlopeAlgorithm.UNITS).setParameterValue(unit);
 
         /*
