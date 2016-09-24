@@ -10,6 +10,7 @@ import es.unex.sextante.exceptions.RepeatedParameterNameException;
 import es.unex.sextante.gridCategorical.reclassify.ReclassifyAlgorithm;
 import es.unex.sextante.parameters.FixedTableModel;
 import java.util.logging.Logger;
+import org.geotools.util.logging.Logging;
 
 /**
  * Avalanche Terrain Exposure based on a reclassification of slope, aspect, curvature
@@ -30,7 +31,7 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
     public static final String  LANDCLASS   = "LANDCLASS";
     public static final String  ATEI        = "ATEI";
     
-    private static final Logger LOG = Logger.getLogger(AvalancheTerrainExposureAlgorithm.class.getName());
+    private static final Logger LOG = Logging.getLogger(AvalancheTerrainExposureAlgorithm.class.getName());
     
     private IRasterLayer        m_Slope                 = null;
     private IRasterLayer        m_Aspect                = null;
@@ -124,8 +125,10 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
          else {
             
             dATEI = ((dSlope * SLOPE_COEFF) + (dAspect * ASPECT_COEFF) + (dCurvature * CURVAT_COEFF) + (dLandClass * LCLASS_COEFF));
-            m_AvalancheTerrainExposureIndex.setCellValue(y, y, dATEI);
-            
+            LOG.info("dSlope * SLOPE_COEFF="+(dSlope * SLOPE_COEFF)+"dAspect * ASPECT_COEFF="+(dAspect * ASPECT_COEFF)+"dCurvature * CURVAT_COEFF="+(dCurvature * CURVAT_COEFF)+
+                    "dLandClass * LCLASS_COEFF="+(dLandClass * LCLASS_COEFF));
+            m_AvalancheTerrainExposureIndex.setCellValue(x, y, dATEI);
+            LOG.info("The value of cell x,y="+x+","+y+" is "+dATEI);
          }
         
     }
@@ -221,7 +224,7 @@ public class AvalancheTerrainExposureAlgorithm extends GeoAlgorithm
         LOG.info("curvTable is "+curvTable.toString());
         
         //LAND CLASSES FROM COPERNICUS {,,},{,,}, see clc_legend_ATEI
-        FixedTableModel lclassTable = new FixedTableModel(cols, 16, true);
+        FixedTableModel lclassTable = new FixedTableModel(cols, 18, true);
         //Continuous urban fabric/Discontinuous urban fabric/Industrial or commercial units
         lclassTable.setValueAt(0.0, 1, 1);
         lclassTable.setValueAt(3.0, 1, 2);
