@@ -68,7 +68,6 @@ public class ATEI extends StaticMethodsProcessFactory<ATEI> {
     private static int methodA = AspectAlgorithm.METHOD_ZEVENBERGEN;
     private static int unitA   = AspectAlgorithm.UNITS_DEGREES;
     
-    //private static int methodC = CurvaturesAlgorithm.METHOD;
     private static String methodC = "Fit_2_Degree_Polynom__Zevenbergen_&_Thorne_1987";
     private static String result = CurvaturesAlgorithm.CLASS;
     
@@ -132,8 +131,8 @@ public class ATEI extends StaticMethodsProcessFactory<ATEI> {
         LOG.info("cropped DEM coverage="+croppedCLC);
         
         //Write DEM coverage to file /tmp/ATEI/xxx.tiff
-        //final File writedir = new File(new StringBuilder("/tmp").append(File.separatorChar).append(ATEI.class.getSimpleName()).toString());
-        Path writedir = Paths.get(new StringBuilder("/tmp").append(File.separatorChar).append(ATEI.class.getSimpleName()).toString());
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        Path writedir = Paths.get(new StringBuilder(tmpDir).append(File.separatorChar).append(ATEI.class.getSimpleName()).toString());
         LOG.info("write directory="+writedir.toString());
         //Care to create directory
         //LOG.info("writedir is a Directory? "+writedir.isDirectory());
@@ -501,7 +500,8 @@ public class ATEI extends StaticMethodsProcessFactory<ATEI> {
     
     static GridCoverage2D getLocalCoverage(String filename) throws Exception {
 
-        File file = new File("/tmp"+File.separatorChar+ATEI.class.getSimpleName()+File.separatorChar+filename);
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        File file = new File(tmpDir+File.separatorChar+ATEI.class.getSimpleName()+File.separatorChar+filename);
         LOG.info("geotiff file to read "+file.toString());
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
         GridCoverage2DReader reader = format.getReader(file);
