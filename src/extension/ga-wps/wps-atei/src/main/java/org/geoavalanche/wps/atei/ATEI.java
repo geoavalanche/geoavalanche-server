@@ -130,7 +130,7 @@ public class ATEI extends StaticMethodsProcessFactory<ATEI> {
         GridCoverage2D croppedCLC = (GridCoverage2D) PROCESSOR.doOperation(clcParam);
         LOG.info("cropped DEM coverage="+croppedCLC);
         
-        //Write DEM coverage to file /tmp/ATEI/xxx.tiff
+        //Write DEM coverage to file in temp directory /tmp/ATEI/sample_cropped.tiff
         String tmpDir = System.getProperty("java.io.tmpdir");
         Path writedir = Paths.get(new StringBuilder(tmpDir).append(File.separatorChar).append(ATEI.class.getSimpleName()).toString());
         LOG.info("write directory="+writedir.toString());
@@ -149,17 +149,6 @@ public class ATEI extends StaticMethodsProcessFactory<ATEI> {
             }
             
         }
-        //final GeoTiffFormat format = new GeoTiffFormat();
-        
-        //final GeoTiffWriteParams wp = new GeoTiffWriteParams();
-        //wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
-        //wp.setCompressionType("LZW");
-        //wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
-        //wp.setTiling(512, 512);
-        
-        //final ParameterValueGroup writerParams = format.getWriteParameters();
-        //writerParams.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString())
-        //            .setValue(wp);
         
         
         String cropDemFileName = new StringBuilder(writedir.toAbsolutePath().toString()).append(File.separatorChar).append(croppedDEM.getName().toString()).append("dem_"+UUID.randomUUID().toString()+".tiff").toString();
@@ -171,29 +160,12 @@ public class ATEI extends StaticMethodsProcessFactory<ATEI> {
         LOG.info("crop CLC filename="+cropClcFileName);
         final File writeCLCFile = new File(cropClcFileName);
         LOG.info("write CLC file="+writeCLCFile.toString());
-        //final GridCoverageWriter writer = format.getWriter(writeFile, new Hints(Hints.CRS, cropped.getCoordinateReferenceSystem()));
         
-        //GeoTiffWriter writer = new GeoTiffWriter(cropped, new Hints(Hints.CRS, cropped.getCoordinateReferenceSystem()));
-//        try {
-//            writer.write(cropped, (GeneralParameterValue[]) writerParams.values().toArray(new GeneralParameterValue[1]));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } finally {
-//            try {
-//                writer.dispose();
-//            } catch (Throwable e) {
-//               e.printStackTrace(); 
-//            }
-//        }
-        
+        //write to filesystem
         writeToGeotiff(croppedDEM, cropDemFileName);
         writeToGeotiff(croppedCLC, cropClcFileName);
-        /** Add a static coverage */
         
-        //static file
-        //GridCoverage2D lCov = getLocalCoverage("result.tiff");
-        
-        //
+        //read from filesystem
         GridCoverage2D lDEMCov = getLocalCoverage(writeDEMFile.getName());
         LOG.info("lDEMcov="+lDEMCov);
         
