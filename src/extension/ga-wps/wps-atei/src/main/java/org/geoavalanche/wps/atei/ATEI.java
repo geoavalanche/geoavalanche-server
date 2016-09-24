@@ -38,6 +38,7 @@ import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.process.factory.StaticMethodsProcessFactory;
 import org.geotools.text.Text;
+import org.geotools.util.logging.Logging;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValueGroup;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -48,7 +49,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  */
 public class ATEI extends StaticMethodsProcessFactory<ATEI> {
     
-    private static final Logger LOG = Logger.getLogger(ATEI.class.getName());
+    private static final Logger LOG = Logging.getLogger(ATEI.class.getName());
     private static final CoverageProcessor PROCESSOR = CoverageProcessor.getInstance();
     public static final String GEOAVALANCHE_NAMESPACE = "geoavalanche";
 
