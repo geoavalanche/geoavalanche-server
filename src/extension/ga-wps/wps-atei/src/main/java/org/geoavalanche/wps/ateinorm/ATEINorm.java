@@ -12,6 +12,7 @@ import es.unex.sextante.exceptions.GeoAlgorithmExecutionException;
 import es.unex.sextante.exceptions.WrongOutputIDException;
 import es.unex.sextante.exceptions.WrongParameterIDException;
 import es.unex.sextante.gridStatistics.multiGridMajority.MultiGridMajorityAlgorithm;
+import es.unex.sextante.gridTools.gridBasicStats.GridBasicStatsAlgorithm;
 import es.unex.sextante.morphometry.aspect.AspectAlgorithm;
 import es.unex.sextante.morphometry.curvatures.CurvaturesAlgorithm;
 import es.unex.sextante.morphometry.slope.SlopeAlgorithm;
@@ -95,7 +96,9 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
     private static String atei = AvalancheTerrainExposureAlgorithm.ATEI;
     
     private static String majorityValue = MultiGridMajorityAlgorithm.RESULT;
-
+    
+    private static String meanSquaredValue = GridBasicStatsAlgorithm.MEAN_SQUARED;
+    private static String meanValue = GridBasicStatsAlgorithm.MEAN;
     
     public ATEINorm() {
         super(Text.text("GeoAvalanche"), GEOAVALANCHE_NAMESPACE, ATEINorm.class);
@@ -131,7 +134,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
                     theGeometry = (Geometry) feature.getAttribute("geometry");
                 }
                 if (theGeometry != null) {
-                    String relAtei = getAteiNorm(theGeometry, dem, clc); 
+                    String relAtei = Double.toString(getAteiNorm(theGeometry, dem, clc)); 
                     LOG.info("returned atei ="+relAtei);
                     fb.set("atei", relAtei);
                 }
@@ -145,11 +148,12 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
             LOG.info("nrec = " + ret.size());
             return ret;
         } catch (Exception e) {
+            e.printStackTrace();
             return featureCollection;
         }
     }
     
-    private static String getAteiNorm(Geometry thegeom, GridCoverage2D globdem, GridCoverage2D globclc) throws GeoAlgorithmExecutionException, Exception {
+    private static double getAteiNorm(Geometry thegeom, GridCoverage2D globdem, GridCoverage2D globclc) throws GeoAlgorithmExecutionException, Exception {
         
         // get the bounds
         CoordinateReferenceSystem crs;
@@ -253,15 +257,26 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
         IRasterLayer curvature = getCurvature(rasterDEM,methodC,rasterDEM.getLayerGridExtent());
         IRasterLayer landcover = (IRasterLayer) rasterCLC;
         
-        IRasterLayer atei = getATEI(slope,aspect,curvature,landcover,slope.getLayerGridExtent());
-        GridCoverage2D gridRes = (GridCoverage2D) atei.getBaseDataObject();
-        LOG.info("returned atei layer="+gridRes);            
-
-        //calculate the return index
-        String ret = gridRes.toString();//@TODO replace with correct processing of norm
-        LOG.info("relative returned index"+ret);
+        double ateiMean = getATEIMean(slope,aspect,curvature,landcover,slope.getLayerGridExtent());
         
-        return ret;
+        //IRasterLayer ateiMGrid = getATEIMajority(slope,aspect,curvature,landcover,slope.getLayerGridExtent());               
+
+        //Process with Extrema for the highest
+        /* GridCoverage2D ateiMajorityGC = (GridCoverage2D) ateiMGrid.getBaseDataObject();
+        LOG.info("returned atei majority grid layer="+ateiMajorityGC); 
+        
+        ParameterValueGroup paramsExtrema = PROCESSOR.getOperation("Extrema").getParameters();
+        paramsExtrema.parameter("Source").setValue(ateiMajorityGC);        
+        GridCoverage2D result = (GridCoverage2D) PROCESSOR.doOperation(paramsExtrema, null);
+        double[] ateiHighestValue = (double[]) result.getProperty("maximum");
+        for (int x = 0; x < ateiHighestValue.length; x++) {
+            LOG.info("maximum[" + x + "]=" + ateiHighestValue[x]);
+        }
+        LOG.info("ateiMajorValue="+ateiHighestValue);
+        
+        return ateiHighestValue[0]; */
+        
+        return ateiMean;
         
     }
     
@@ -497,10 +512,10 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
      * @param curvature the Curvature
      * @param landcover the LandCover
      * @param ext the Extent of the calculation
-     * @return an atei layer
+     * @return an atei layer with the majority
      * @throws GeoAlgorithmExecutionException
      */
-    private static IRasterLayer getATEI(IRasterLayer slope, IRasterLayer aspect, IRasterLayer curvature, IRasterLayer landcover, AnalysisExtent ext) 
+    private static double getATEIMean(IRasterLayer slope, IRasterLayer aspect, IRasterLayer curvature, IRasterLayer landcover, AnalysisExtent ext) 
             throws GeoAlgorithmExecutionException {
         
         /*
@@ -562,22 +577,23 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
          */
         IRasterLayer atei = (IRasterLayer) out.getOutputObject();
         
-        double ateiMajorityValue = getGridMajority(atei);
-        LOG.info("ateiMajorValue="+ateiMajorityValue);
+        //Process with Mean of values
+        double ateiMean = getMean(atei,atei.getLayerGridExtent());
         
-        return atei;
+        return ateiMean;
         
     }
     
-    private static double getGridMajority(IRasterLayer raster) 
+    private static double getMean(IRasterLayer raster, AnalysisExtent ext) 
             throws WrongParameterIDException, WrongOutputIDException, GeoAlgorithmExecutionException {
         
         /*Calculate the majority of values from the pixels of the grid*/
         
         /*
-         * Instantiate the MultiGridMajorityAlgorithm class
+         * Instantiate the GridBasicStatsAlgorithm class
          */
-        MultiGridMajorityAlgorithm alg = new MultiGridMajorityAlgorithm();
+        GridBasicStatsAlgorithm alg = new GridBasicStatsAlgorithm();
+        alg.setAnalysisExtent(ext);
         
         /*
          * The first thing we have to do is to set up the input parameters
@@ -586,7 +602,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
         params = alg.getParameters();
         
         //raster input
-        params.getParameter(MultiGridMajorityAlgorithm.INPUT).setParameterValue(raster);
+        params.getParameter(GridBasicStatsAlgorithm.INPUT).setParameterValue(raster);
         
         /*
          *  This algorithm will generate a new double value.
@@ -596,7 +612,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
          * data.
          */
         OutputObjectsSet outputs = alg.getOutputObjects();
-        OutputNumericalValue out = (OutputNumericalValue) outputs.getOutput(majorityValue);
+        OutputNumericalValue out = (OutputNumericalValue) outputs.getOutput(meanValue);
 
         /*
          * Execute the algorithm. We use no task monitor,
@@ -618,7 +634,145 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
         /*
          * Now the result can be taken from the output container
          */
-        double majority = (double) out.getOutputObject();
+        double mean = (double) out.getOutputObject();
+        
+        LOG.info("The mean value of values="+mean);
+    
+        return mean;
+        
+    }
+    
+    /**
+     * Returns an Avalanche Terrain Exposure layer created from the passed Slope,Aspect,Curvature,LandCover
+     *
+     * @param slope the Slope
+     * @param aspect the Aspect
+     * @param curvature the Curvature
+     * @param landcover the LandCover
+     * @param ext the Extent of the calculation
+     * @return an atei layer with the majority
+     * @throws GeoAlgorithmExecutionException
+     */
+    private static IRasterLayer getATEIMajority(IRasterLayer slope, IRasterLayer aspect, IRasterLayer curvature, IRasterLayer landcover, AnalysisExtent ext) 
+            throws GeoAlgorithmExecutionException {
+        
+        /*
+         * Instantiate the AvalancheTerrainExposureAlgorithm class
+         */
+        AvalancheTerrainExposureAlgorithm alg = new AvalancheTerrainExposureAlgorithm();
+        alg.setAnalysisExtent(ext);
+        
+        /*
+         * The first thing we have to do is to set up the input parameters
+         */
+        ParametersSet params = alg.getParameters();
+        
+        //slope input
+        params.getParameter(ATEINorm.slope).setParameterValue(slope);
+
+        //aspect input
+        params.getParameter(ATEINorm.aspect).setParameterValue(aspect);
+        
+        //curvature input
+        params.getParameter(ATEINorm.curvature).setParameterValue(curvature);
+        
+        //landcover input
+        params.getParameter(landclass).setParameterValue(landcover);
+        
+        /*
+         *  This algorithm will generate a new raster layer.
+         * We can select "where" to put the result. To do this, we
+         * retrieve the output container and set the output channel,
+         * which contains information about the destiny of the resulting
+         * data. The most common way of using this is setting
+         * a FileOutputChannel, which contains the information needed to
+         * put the output to a file (basically a filename).
+         * If we omit this, a FileOutputChannel will be used,
+         * using a temporary filename.
+         */
+        OutputObjectsSet outputs = alg.getOutputObjects();
+        Output out = outputs.getOutput(atei);
+        
+        /*
+         * Execute the algorithm. We use no task monitor,
+         * so we will not be able to monitor the progress
+         * of the execution. SEXTANTE also provides a DefaultTaskMonitor,
+         * which shows a simple progress bar, or you could make your
+         * own one, implementing the ITaskMonitor interface
+         *
+         * The execute method returns true if everything went OK, or false if it
+         * was canceled. Since we are not giving the user the chance to
+         * cancel it (there is no task monitor), we do not care about the
+         * return value.
+         *
+         * If something goes wrong, it will throw an exception.
+         */
+        //@TODO Maybe it is better to monitoring the task and raise exceptions in try..catch
+        alg.execute(null, outputFactory); 
+
+        /*
+         * Now the result can be taken from the output container
+         */
+        IRasterLayer atei = (IRasterLayer) out.getOutputObject();
+        
+        //Process with Majority values
+        IRasterLayer ateiMajorityGrid = getGridMajority(atei,atei.getLayerGridExtent());
+        
+        return ateiMajorityGrid;
+        
+    }
+    
+    private static IRasterLayer getGridMajority(IRasterLayer raster, AnalysisExtent ext) 
+            throws WrongParameterIDException, WrongOutputIDException, GeoAlgorithmExecutionException {
+        
+        /*Calculate the majority of values from the pixels of the grid*/
+        
+        /*
+         * Instantiate the MultiGridMajorityAlgorithm class
+         */
+        MultiGridMajorityAlgorithm alg = new MultiGridMajorityAlgorithm();
+        alg.setAnalysisExtent(ext);
+        
+        /*
+         * The first thing we have to do is to set up the input parameters
+         */
+        ParametersSet params = alg.getParameters();
+        params = alg.getParameters();
+        
+        //raster input
+        params.getParameter(MultiGridMajorityAlgorithm.INPUT).setParameterValue(raster);
+        
+        /*
+         *  This algorithm will generate a new double value.
+         * We can select "where" to put the result. To do this, we
+         * retrieve the output container and set the output channel,
+         * which contains information about the destiny of the resulting
+         * data.
+         */
+        OutputObjectsSet outputs = alg.getOutputObjects();
+        Output out = outputs.getOutput(majorityValue);
+
+        /*
+         * Execute the algorithm. We use no task monitor,
+         * so we will not be able to monitor the progress
+         * of the execution. SEXTANTE also provides a DefaultTaskMonitor,
+         * which shows a simple progress bar, or you could make your
+         * own one, implementing the ITaskMonitor interface
+         *
+         * The execute method returns true if everything went OK, or false if it
+         * was canceled. Since we are not giving the user the chance to
+         * cancel it (there is no task monitor), we do not care about the
+         * return value.
+         *
+         * If something goes wrong, it will throw an exception.
+         */
+        //@TODO Maybe it is better to monitoring the task and raise exceptions in try..catch
+        alg.execute(null, outputFactory); 
+        
+        /*
+         * Now the result can be taken from the output container
+         */
+        IRasterLayer majority = (IRasterLayer) out.getOutputObject();
         
         LOG.info("The majority value of values="+majority);
     
