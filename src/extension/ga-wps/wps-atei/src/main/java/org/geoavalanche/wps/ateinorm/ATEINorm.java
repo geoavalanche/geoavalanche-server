@@ -1,4 +1,4 @@
-package org.geoavalanche.wps.atei;
+package org.geoavalanche.wps.ateinorm;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryCollection;
@@ -9,11 +9,15 @@ import es.unex.sextante.core.ParametersSet;
 import es.unex.sextante.core.Sextante;
 import es.unex.sextante.dataObjects.IRasterLayer;
 import es.unex.sextante.exceptions.GeoAlgorithmExecutionException;
+import es.unex.sextante.exceptions.WrongOutputIDException;
+import es.unex.sextante.exceptions.WrongParameterIDException;
+import es.unex.sextante.gridStatistics.multiGridMajority.MultiGridMajorityAlgorithm;
 import es.unex.sextante.morphometry.aspect.AspectAlgorithm;
 import es.unex.sextante.morphometry.curvatures.CurvaturesAlgorithm;
 import es.unex.sextante.morphometry.slope.SlopeAlgorithm;
 import org.geoavalanche.alg.avalanche.AvalancheTerrainExposureAlgorithm;
 import es.unex.sextante.outputs.Output;
+import es.unex.sextante.outputs.OutputNumericalValue;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -89,6 +93,8 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
     private static String curvature = AvalancheTerrainExposureAlgorithm.CURVATURE;
     private static String landclass = AvalancheTerrainExposureAlgorithm.LANDCLASS;
     private static String atei = AvalancheTerrainExposureAlgorithm.ATEI;
+    
+    private static String majorityValue = MultiGridMajorityAlgorithm.RESULT;
 
     
     public ATEINorm() {
@@ -252,7 +258,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
         LOG.info("returned atei layer="+gridRes);            
 
         //calculate the return index
-        String ret = gridRes.getPropertyNames()[1];//@TODO replace with correct processing of norm
+        String ret = gridRes.toString();//@TODO replace with correct processing of norm
         LOG.info("relative returned index"+ret);
         
         return ret;
@@ -483,7 +489,17 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
         
     }
     
-    
+    /**
+     * Returns an Avalanche Terrain Exposure layer created from the passed Slope,Aspect,Curvature,LandCover
+     *
+     * @param slope the Slope
+     * @param aspect the Aspect
+     * @param curvature the Curvature
+     * @param landcover the LandCover
+     * @param ext the Extent of the calculation
+     * @return an atei layer
+     * @throws GeoAlgorithmExecutionException
+     */
     private static IRasterLayer getATEI(IRasterLayer slope, IRasterLayer aspect, IRasterLayer curvature, IRasterLayer landcover, AnalysisExtent ext) 
             throws GeoAlgorithmExecutionException {
         
@@ -545,8 +561,68 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
          * Now the result can be taken from the output container
          */
         IRasterLayer atei = (IRasterLayer) out.getOutputObject();
-
+        
+        double ateiMajorityValue = getGridMajority(atei);
+        LOG.info("ateiMajorValue="+ateiMajorityValue);
+        
         return atei;
+        
+    }
+    
+    private static double getGridMajority(IRasterLayer raster) 
+            throws WrongParameterIDException, WrongOutputIDException, GeoAlgorithmExecutionException {
+        
+        /*Calculate the majority of values from the pixels of the grid*/
+        
+        /*
+         * Instantiate the MultiGridMajorityAlgorithm class
+         */
+        MultiGridMajorityAlgorithm alg = new MultiGridMajorityAlgorithm();
+        
+        /*
+         * The first thing we have to do is to set up the input parameters
+         */
+        ParametersSet params = alg.getParameters();
+        params = alg.getParameters();
+        
+        //raster input
+        params.getParameter(MultiGridMajorityAlgorithm.INPUT).setParameterValue(raster);
+        
+        /*
+         *  This algorithm will generate a new double value.
+         * We can select "where" to put the result. To do this, we
+         * retrieve the output container and set the output channel,
+         * which contains information about the destiny of the resulting
+         * data.
+         */
+        OutputObjectsSet outputs = alg.getOutputObjects();
+        OutputNumericalValue out = (OutputNumericalValue) outputs.getOutput(majorityValue);
+
+        /*
+         * Execute the algorithm. We use no task monitor,
+         * so we will not be able to monitor the progress
+         * of the execution. SEXTANTE also provides a DefaultTaskMonitor,
+         * which shows a simple progress bar, or you could make your
+         * own one, implementing the ITaskMonitor interface
+         *
+         * The execute method returns true if everything went OK, or false if it
+         * was canceled. Since we are not giving the user the chance to
+         * cancel it (there is no task monitor), we do not care about the
+         * return value.
+         *
+         * If something goes wrong, it will throw an exception.
+         */
+        //@TODO Maybe it is better to monitoring the task and raise exceptions in try..catch
+        alg.execute(null, outputFactory); 
+        
+        /*
+         * Now the result can be taken from the output container
+         */
+        double majority = (double) out.getOutputObject();
+        
+        LOG.info("The majority value of values="+majority);
+    
+        return majority;
         
     }
     
