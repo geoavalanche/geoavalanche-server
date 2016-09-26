@@ -101,8 +101,8 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
         super(Text.text("GeoAvalanche"), GEOAVALANCHE_NAMESPACE, ATEINorm.class);
     }
     
-    @DescribeProcess(title = "ATEI", description = "Calculate Avalanche Terrain Exposure Standard Deviation Index in a feature collection")
-    @DescribeResult(description = "Shape result with ATEI")
+    @DescribeProcess(title = "ATEINorm", description = "Calculate Avalanche Terrain Exposure Majority Value Index in a feature collection")
+    @DescribeResult(description = "Shape result with ATEINorm")
     public static SimpleFeatureCollection ATEINorm (
             
             @DescribeParameter(name = "dem", description = "DEM coverage") GridCoverage2D dem,
@@ -190,7 +190,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
         GridCoverage2D croppedCLC = (GridCoverage2D) PROCESSOR.doOperation(clcParam);
         LOG.info("cropped DEM coverage="+croppedCLC);
         
-        //Write DEM coverage to file in temp directory /tmp/ATEI/sample_cropped.tiff
+        //Write DEM coverage to file in temp directory /tmp/ATEINorm/sample_cropped.tiff
         String tmpDir = System.getProperty("java.io.tmpdir");
         Path writedir = Paths.get(new StringBuilder(tmpDir).append(File.separatorChar).append(ATEINorm.class.getSimpleName()).toString());
         LOG.info("write directory="+writedir.toString());
