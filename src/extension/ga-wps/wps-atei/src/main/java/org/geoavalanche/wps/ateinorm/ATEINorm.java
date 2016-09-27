@@ -47,11 +47,13 @@ import org.geotools.gce.geotiff.GeoTiffFormat;
 import org.geotools.gce.geotiff.GeoTiffWriteParams;
 import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.process.factory.StaticMethodsProcessFactory;
+import org.geotools.referencing.CRS;
 import org.geotools.text.Text;
 import org.geotools.util.logging.Logging;
 import org.opengis.feature.Property;
@@ -60,6 +62,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValueGroup;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
 
 /**
  * ATEINorm
@@ -110,10 +113,14 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
             
             @DescribeParameter(name = "dem", description = "DEM coverage") GridCoverage2D dem,
             @DescribeParameter(name = "clc", description = "Copernicus Land Cover") GridCoverage2D clc,
-            @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection        
+            @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection
     ) throws Exception {
         try {
             LOG.info("step 1");
+            
+            boolean lenient = true;
+            CoordinateReferenceSystem sourceCrs = featureCollection.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem();
+            MathTransform transform3857 = CRS.findMathTransform(sourceCrs, CRS.decode("EPSG:3857"), lenient);
             
             List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
             SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
@@ -134,7 +141,16 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
                     theGeometry = (Geometry) feature.getAttribute("geometry");
                 }
                 if (theGeometry != null) {
-                    String relAtei = Double.toString(getAteiNorm(theGeometry, dem, clc)); 
+                    
+                    Geometry procGeom = null;
+                    
+                    if (sourceCrs!=CRS.decode("EPSG:3857")) {
+                        procGeom = JTS.transform(theGeometry, transform3857);
+                    }    
+                    else {
+                        procGeom = theGeometry;
+                    }
+                    String relAtei = Double.toString(getAteiNorm(procGeom, dem, clc)); 
                     LOG.info("returned atei ="+relAtei);
                     fb.set("atei", relAtei);
                 }
@@ -146,6 +162,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
             SimpleFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
             LOG.info("step 2 ... done ");
             LOG.info("nrec = " + ret.size());
+            itr.close();
             return ret;
         } catch (Exception e) {
             e.printStackTrace();
@@ -808,4 +825,21 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
             e.printStackTrace();
         }
     }
+    
+    static List<SimpleFeature> transform(List<SimpleFeature> featuresList, CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS) throws Exception {
+        if (sourceCRS == null | targetCRS == null | sourceCRS==targetCRS) return featuresList;
+        List<SimpleFeature> ret = new ArrayList();
+        boolean lenient = true;
+        MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, lenient);
+        for (SimpleFeature feature : featuresList) {
+            if (feature.getDefaultGeometry()!=null) {
+                feature.setDefaultGeometry(JTS.transform((Geometry)feature.getDefaultGeometry(), transform));
+            } else {
+                feature.setAttribute("the_geom", JTS.transform((Geometry)feature.getAttribute("the_geom"), transform));
+            }
+            ret.add(feature);
+        }
+        return ret;
+    }
+    
 }
