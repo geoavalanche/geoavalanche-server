@@ -113,14 +113,29 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
             
             @DescribeParameter(name = "dem", description = "DEM coverage") GridCoverage2D dem,
             @DescribeParameter(name = "clc", description = "Copernicus Land Cover") GridCoverage2D clc,
-            @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection
+            @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection,
+            @DescribeParameter(name = "sourceCRS", description = "sourceCRS", min=0, max=1) CoordinateReferenceSystem sourceCRS
     ) throws Exception {
         try {
             LOG.info("step 1");
             
             boolean lenient = true;
-            CoordinateReferenceSystem sourceCrs = featureCollection.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem();
-            MathTransform transform3857 = CRS.findMathTransform(sourceCrs, CRS.decode("EPSG:3857"), lenient);
+            CoordinateReferenceSystem sourceCrs = null;
+            MathTransform transform3857 = CRS.findMathTransform(CRS.decode("EPSG:4623"), CRS.decode("EPSG:3857"), lenient);
+                    
+            if (sourceCRS == null) {
+                sourceCrs = featureCollection.getBounds().getCoordinateReferenceSystem();
+            }
+            else {
+                sourceCrs = sourceCRS;
+            }
+            LOG.info("source CRS of feature collection ="+sourceCrs);
+            
+            try {
+                transform3857 = CRS.findMathTransform(sourceCrs, CRS.decode("EPSG:3857"), lenient);
+            } catch (Exception e) {
+                LOG.severe("Error with source CRS obtained from feature collection with exception "+e);
+            }
             
             List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
             SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
