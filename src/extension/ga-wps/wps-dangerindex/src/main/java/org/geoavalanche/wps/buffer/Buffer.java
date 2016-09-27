@@ -81,6 +81,7 @@ public class Buffer extends StaticMethodsProcessFactory<Buffer> {
 
         SimpleFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), transform(featuresList,sourceCRS,targetCRS));
         LOG.info("nrec = " + ret.size());
+        itr.close();
         return ret;
     }
 

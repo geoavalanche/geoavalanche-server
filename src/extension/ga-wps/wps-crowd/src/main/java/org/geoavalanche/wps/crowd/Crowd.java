@@ -114,6 +114,7 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
         
         ListFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
         LOG.info("nrec = " + ret.size());
+        itr.close();
         return ret;
     }
 
