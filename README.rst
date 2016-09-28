@@ -400,7 +400,8 @@ Build the container again.
 Credits
 =======
 
-This application has been developed within the MyGEOSS_ project, which has received funding from the European Union’s Horizon 2020 research and innovation programme.
+This application has been developed within the `MyGEOSS`_ project, which has received funding from the European Union’s Horizon 2020 research and innovation programme.
+
 .. _MyGEOSS: http://digitalearthlab.jrc.ec.europa.eu/mygeoss/
 
 .. image:: /assets/mygeoss_logo.png
