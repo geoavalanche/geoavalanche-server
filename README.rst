@@ -404,3 +404,6 @@ This application has been developed within the `MyGEOSS`_ project, which has rec
 
 .. _MyGEOSS: http://digitalearthlab.jrc.ec.europa.eu/mygeoss/
 
+.. image:: /assets/mygeoss_logo.png
+
+.. image:: /assets/euc_logo.png
