@@ -403,7 +403,7 @@ Credits
 This application has been developed within the MyGEOSS_ project, which has received funding from the European Union’s Horizon 2020 research and innovation programme.
 .. _MyGEOSS: http://digitalearthlab.jrc.ec.europa.eu/mygeoss/
 
-.. image:: /img/mygeoss_logo.png
+.. image:: /assets/mygeoss_logo.png
 
-.. image:: /img/euc_logo.png
+.. image:: /assets/euc_logo.png
 
