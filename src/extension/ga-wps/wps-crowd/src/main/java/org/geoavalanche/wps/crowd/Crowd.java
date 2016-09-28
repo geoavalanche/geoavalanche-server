@@ -60,62 +60,67 @@ public class Crowd extends StaticMethodsProcessFactory<Crowd> {
             @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection,
             @DescribeParameter(name = "sourceCRS", description = "sourceCRS", min=0, max=1) CoordinateReferenceSystem sourceCRS            
     ) throws Exception {
-        Map<String, String> env = System.getenv();
-        for (String envName : env.keySet()) {
-            LOG.info(envName+"="+env.get(envName));
-        }
-
         try {
-            mongoip=System.getenv().get("MONGOIP");
-        } catch (Exception e) {
-            LOG.severe("env MONGOIP is not set");
-        }
-        try {            
-            mongoport=Integer.parseInt(System.getenv().get("MONGOPORT"));
-        } catch (Exception e) {
-            LOG.severe("env MONGOPORT is not set");
-        }
-        
-        if (sourceCRS == null) {
-            sourceCRS=CRS.decode("EPSG:3857");
-        }
-        if (isAvailableMongodb==null) {
-            isAvailableMongodb = isAvailableMongodb();
-        }
-        LOG.info("isAvailableMongodb="+isAvailableMongodb);
-        List<Incidents> incidents = null;
-        if (!isAvailableMongodb) {
-            incidents = getAllIncidents();
-        }
-        
-        List<SimpleFeature> featuresList = new ArrayList();
-        SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
-        
-        SimpleFeatureIterator itr = featureCollection.features();
-        while (itr.hasNext()) {         
-            SimpleFeature feature = itr.next();
-            fb.reset();
-            for (Property p: feature.getProperties()) {
-               fb.set(p.getName().getLocalPart(), p.getValue());
+            Map<String, String> env = System.getenv();
+            for (String envName : env.keySet()) {
+                LOG.info(envName+"="+env.get(envName));
             }
-            Geometry theGeometry = (Geometry)feature.getAttribute("the_geom");
-            if (theGeometry == null) {
-                theGeometry = (Geometry)feature.getAttribute("geometry");
+
+            try {
+                mongoip=System.getenv().get("MONGOIP");
+            } catch (Exception e) {
+                LOG.severe("env MONGOIP is not set");
             }
-            if (theGeometry != null) {
-                if (!isAvailableMongodb) {
-                    fb.set("incidents", getNumIncidentsOfGeometry(incidents, theGeometry, sourceCRS));
-                } else {
-                    fb.set("incidents", getNumIncidentsOfGeometry(theGeometry, sourceCRS));
+            try {            
+                mongoport=Integer.parseInt(System.getenv().get("MONGOPORT"));
+            } catch (Exception e) {
+                LOG.severe("env MONGOPORT is not set");
+            }
+
+            if (sourceCRS == null) {
+                sourceCRS=CRS.decode("EPSG:3857");
+            }
+            if (isAvailableMongodb==null) {
+                isAvailableMongodb = isAvailableMongodb();
+            }
+            LOG.info("isAvailableMongodb="+isAvailableMongodb);
+            List<Incidents> incidents = null;
+            if (!isAvailableMongodb) {
+                incidents = getAllIncidents();
+            }
+
+            List<SimpleFeature> featuresList = new ArrayList();
+            SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
+
+            SimpleFeatureIterator itr = featureCollection.features();
+            while (itr.hasNext()) {         
+                SimpleFeature feature = itr.next();
+                fb.reset();
+                for (Property p: feature.getProperties()) {
+                   fb.set(p.getName().getLocalPart(), p.getValue());
                 }
-            } 
-            featuresList.add(fb.buildFeature(feature.getID()));
+                Geometry theGeometry = (Geometry)feature.getAttribute("the_geom");
+                if (theGeometry == null) {
+                    theGeometry = (Geometry)feature.getAttribute("geometry");
+                }
+                if (theGeometry != null) {
+                    if (!isAvailableMongodb) {
+                        fb.set("incidents", getNumIncidentsOfGeometry(incidents, theGeometry, sourceCRS));
+                    } else {
+                        fb.set("incidents", getNumIncidentsOfGeometry(theGeometry, sourceCRS));
+                    }
+                } 
+                featuresList.add(fb.buildFeature(feature.getID()));
+            }
+
+            ListFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
+            LOG.info("nrec = " + ret.size());
+            itr.close();
+            return ret;
+        } catch(Exception e) {
+            e.printStackTrace();
+            return featureCollection;            
         }
-        
-        ListFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
-        LOG.info("nrec = " + ret.size());
-        itr.close();
-        return ret;
     }
 
     static String getNumIncidentsOfGeometry(List<Incidents> incidents, Geometry theGeometry, CoordinateReferenceSystem sourceCRS) throws Exception {

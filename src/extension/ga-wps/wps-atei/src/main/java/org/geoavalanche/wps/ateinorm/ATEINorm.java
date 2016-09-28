@@ -121,20 +121,20 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
             LOG.info("step 1");
             
             boolean lenient = true;
-            CoordinateReferenceSystem sourceCrs = null;
-            MathTransform transform3035 = CRS.findMathTransform(CRS.decode("EPSG:4623"), CRS.decode("EPSG:3035"), lenient);
+            CoordinateReferenceSystem sourceCRS_ = null;
+            MathTransform transform3035 = null;
                     
             if (sourceCRS == null) {
                 //sourceCrs = featureCollection.getBounds().getCoordinateReferenceSystem(); doesn't work, returns ever null
-                sourceCrs = CRS.decode("EPSG:4326");
+                sourceCRS_ = CRS.decode("EPSG:4326");
             }
             else {
-                sourceCrs = sourceCRS;
+                sourceCRS_ = sourceCRS;
             }
-            LOG.info("source CRS of feature collection ="+sourceCrs);
+            LOG.info("source CRS of feature collection ="+sourceCRS_);
             
             try {
-                transform3035 = CRS.findMathTransform(sourceCrs, CRS.decode("EPSG:3035"), lenient);
+                transform3035 = CRS.findMathTransform(sourceCRS_, CRS.decode("EPSG:3035"), lenient);
             } catch (Exception e) {
                 LOG.severe("Error with source CRS obtained from feature collection with exception "+e);
             }
@@ -161,7 +161,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
                     
                     Geometry procGeom = null;
                     
-                    if (sourceCrs!=CRS.decode("EPSG:3035")) {
+                    if (sourceCRS_!=CRS.decode("EPSG:3035")) {
                         procGeom = JTS.transform(theGeometry, transform3035);
                     }    
                     else {

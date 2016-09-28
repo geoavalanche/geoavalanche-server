@@ -35,39 +35,98 @@ public class DangerIndex extends StaticMethodsProcessFactory<DangerIndex> {
     public static SimpleFeatureCollection DangerIndex(
             @DescribeParameter(name = "FeatureCollection", description = "FeatureCollection") SimpleFeatureCollection featureCollection
             ) throws Exception {
-        
-        List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
-        SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
+        try {        
+            List<SimpleFeature> featuresList = new ArrayList<SimpleFeature>();
+            SimpleFeatureBuilder fb = getSimpleFeatureBuilder(featureCollection);
 
-        SimpleFeatureIterator itr = featureCollection.features();
-        while (itr.hasNext()) {
-            String incidents = null;
-            SimpleFeature feature = itr.next();
-            fb.reset();
-            for (Property p : feature.getProperties()) {
-                fb.set(p.getName().getLocalPart(), p.getValue());
-                if (p.getName().getLocalPart().equalsIgnoreCase("incidents")) {
-                    incidents = (String)p.getValue();
+            SimpleFeatureIterator itr = featureCollection.features();
+            while (itr.hasNext()) {
+                long incidentsInLastWeek = 0;
+                double fsc = 0;
+                double atei = 0;
+                long dangerindex = 0;
+                SimpleFeature feature = itr.next();
+                fb.reset();
+                for (Property p : feature.getProperties()) {
+                    fb.set(p.getName().getLocalPart(), p.getValue());
+                    if (p.getName().getLocalPart().equalsIgnoreCase("incidents")) {
+                        incidentsInLastWeek = getIncidentsInLastWeek((String)p.getValue());
+                    }
+                    if (p.getName().getLocalPart().equalsIgnoreCase("fsc")) {
+                        fsc = getFsc((String)p.getValue());
+                    }                
+                    if (p.getName().getLocalPart().equalsIgnoreCase("atei")) {
+                        atei = getAtei((String)p.getValue());
+                    }                
+                }
+
+                dangerindex = getDangerIndex(incidentsInLastWeek, fsc, atei);            
+                fb.set("dangerindex", ""+dangerindex);
+                featuresList.add(fb.buildFeature(feature.getID()));
+            }
+
+            SimpleFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
+            LOG.info("nrec = " + ret.size());
+            return ret;
+        } catch(Exception e) {
+            e.printStackTrace();
+            return featureCollection;
+        }
+    }
+    
+    static long getDangerIndex(long incidentsInLastWeek, double fsc, double atei) {
+        if (incidentsInLastWeek >= 1) {
+            return (long)Math.ceil(fsc / 100 * atei);
+        } else {
+            return (long)Math.floor(fsc / 100 * atei);
+        }
+    }
+    
+    static long getIncidentsInLastWeek(String theValue) {
+        StringTokenizer st = new StringTokenizer(theValue, ",");
+        long _incidents = Long.parseLong(st.nextToken());
+        long _incidentsInLastYear = Long.parseLong(st.nextToken());
+        long _incidentsInLastMonth = Long.parseLong(st.nextToken());
+        long _incidentsInLastWeek = Long.parseLong(st.nextToken());
+        return _incidentsInLastWeek; 
+    }
+
+    static double getFsc(String theValue) {
+        double ret=0;
+        StringTokenizer st = new StringTokenizer(theValue, ",");
+        try {
+            double fsc = Double.parseDouble(st.nextToken()); //daily_FSC_PanEuropean_Optical
+            if (fsc >= 100 && fsc <= 200) {
+                if ((fsc - 100) > ret) {
+                    ret = fsc - 100;
                 }
             }
-            if (incidents!=null) {
-                StringTokenizer st = new StringTokenizer(incidents, ",");
-                int total = Integer.parseInt(st.nextToken());
-                if (total == 1) {
-                    fb.set("dangerindex", "1");
-                } else if (total > 1) {
-                    fb.set("dangerindex", "2");
-                } else {
-                    fb.set("dangerindex", "0");
+        } catch (Exception e) {
+        }
+        try {
+            double fsc = Double.parseDouble(st.nextToken()); //daily_FSC_Alps_Optical
+            if (fsc >= 100 && fsc <= 200) {
+                if ((fsc - 100) > ret) {
+                    ret = fsc - 100;
                 }
-            } else {
-                fb.set("dangerindex", "0");
             }
-            featuresList.add(fb.buildFeature(feature.getID()));
+        } catch (Exception e) {
+        }
+        try {
+            double fsc = Double.parseDouble(st.nextToken()); //daily_FSC_Baltic_Optical
+            if (fsc >= 100 && fsc <= 200) {
+                if ((fsc - 100) > ret) {
+                    ret = fsc - 100;
+                }
+            }
+        } catch (Exception e) {
         }
 
-        SimpleFeatureCollection ret = new ListFeatureCollection(fb.getFeatureType(), featuresList);
-        LOG.info("nrec = " + ret.size());
+        return ret; 
+    }
+    
+    static double getAtei(String theValue) {
+        double ret = Double.parseDouble(theValue);
         return ret;
     }
 

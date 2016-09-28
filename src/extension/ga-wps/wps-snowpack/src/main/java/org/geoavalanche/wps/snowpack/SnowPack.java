@@ -124,6 +124,7 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
             LOG.info("nrec = " + ret.size());
             return ret;
         } catch (Exception e) {
+            e.printStackTrace();
             return featureCollection;
         }
     }
