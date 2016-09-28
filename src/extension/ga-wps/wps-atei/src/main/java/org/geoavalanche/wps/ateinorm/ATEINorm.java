@@ -1,7 +1,8 @@
 package org.geoavalanche.wps.ateinorm;
 
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
+import com.vividsolutions.jts.geom.MultiPolygon;
+import com.vividsolutions.jts.geom.Polygon;
 import es.unex.sextante.core.AnalysisExtent;
 import es.unex.sextante.core.OutputFactory;
 import es.unex.sextante.core.OutputObjectsSet;
@@ -121,10 +122,11 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
             
             boolean lenient = true;
             CoordinateReferenceSystem sourceCrs = null;
-            MathTransform transform3857 = CRS.findMathTransform(CRS.decode("EPSG:4623"), CRS.decode("EPSG:3857"), lenient);
+            MathTransform transform3035 = CRS.findMathTransform(CRS.decode("EPSG:4623"), CRS.decode("EPSG:3035"), lenient);
                     
             if (sourceCRS == null) {
-                sourceCrs = featureCollection.getBounds().getCoordinateReferenceSystem();
+                //sourceCrs = featureCollection.getBounds().getCoordinateReferenceSystem(); doesn't work, returns ever null
+                sourceCrs = CRS.decode("EPSG:4326");
             }
             else {
                 sourceCrs = sourceCRS;
@@ -132,7 +134,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
             LOG.info("source CRS of feature collection ="+sourceCrs);
             
             try {
-                transform3857 = CRS.findMathTransform(sourceCrs, CRS.decode("EPSG:3857"), lenient);
+                transform3035 = CRS.findMathTransform(sourceCrs, CRS.decode("EPSG:3035"), lenient);
             } catch (Exception e) {
                 LOG.severe("Error with source CRS obtained from feature collection with exception "+e);
             }
@@ -159,13 +161,13 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
                     
                     Geometry procGeom = null;
                     
-                    if (sourceCrs!=CRS.decode("EPSG:3857")) {
-                        procGeom = JTS.transform(theGeometry, transform3857);
+                    if (sourceCrs!=CRS.decode("EPSG:3035")) {
+                        procGeom = JTS.transform(theGeometry, transform3035);
                     }    
                     else {
                         procGeom = theGeometry;
                     }
-                    String relAtei = Double.toString(getAteiNorm(procGeom, dem, clc)); 
+                    String relAtei = Double.toString(getAteiNorm(procGeom, dem, clc, true)); 
                     LOG.info("returned atei ="+relAtei);
                     fb.set("atei", relAtei);
                 }
@@ -185,25 +187,25 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
         }
     }
     
-    private static double getAteiNorm(Geometry thegeom, GridCoverage2D globdem, GridCoverage2D globclc) throws GeoAlgorithmExecutionException, Exception {
+    private static double getAteiNorm(Geometry thegeom, GridCoverage2D globdem, GridCoverage2D globclc, boolean withRoi) throws GeoAlgorithmExecutionException, Exception {
         
         // get the bounds
-        CoordinateReferenceSystem crs;
-
-        if (thegeom.getUserData() instanceof CoordinateReferenceSystem) {
-            crs = (CoordinateReferenceSystem) thegeom.getUserData();
-        } else {
-            // assume the geometry is in the same crs
-            crs = globdem.getCoordinateReferenceSystem();
-        }
-        GeneralEnvelope bounds = new GeneralEnvelope(new ReferencedEnvelope(thegeom.getEnvelopeInternal(), crs));
-
-        // force it to a collection if necessary
-        GeometryCollection roi;
-        if (!(thegeom instanceof GeometryCollection)) {
-            roi = thegeom.getFactory().createGeometryCollection(new Geometry[] { thegeom });
-        } else {
-            roi = (GeometryCollection) thegeom;
+        
+        GeneralEnvelope bounds = new GeneralEnvelope(new ReferencedEnvelope(thegeom.getEnvelopeInternal(), globdem.getCoordinateReferenceSystem()));
+        LOG.info("bounds=" + bounds);
+        
+        // get a polygon shape for Atei if receiving multipolygon
+        Polygon roi = null;
+        if (withRoi) {            
+            if (thegeom instanceof Polygon) {
+                roi = (Polygon)thegeom;
+            } else if (thegeom instanceof MultiPolygon) {
+                MultiPolygon mp = (MultiPolygon) thegeom;
+                if (mp.getNumGeometries()>=1) {
+                    roi = (Polygon)mp.getGeometryN(0);
+                }
+            }
+            LOG.info("roi=" + roi);
         }
         
         //@TODO Do cropping and writing/reading to/from file concurrently
