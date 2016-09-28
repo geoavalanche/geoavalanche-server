@@ -397,7 +397,13 @@ Remove the container:
 
 Build the container again.
 
-# Credits
+Credits
+=======
 
-This application has been developed within the [MyGEOSS](http://digitalearthlab.jrc.ec.europa.eu/mygeoss/) project, which has received funding from the European Union’s Horizon 2020 research and innovation programme.
-![MyGEOSS logo](http://geoavalanche.github.io/geoavalanche/img/mygeoss_logo.png) ![EU Commission logo](http://geoavalanche.github.io/geoavalanche/img/euc_logo.png)
+This application has been developed within the MyGEOSS_ project, which has received funding from the European Union’s Horizon 2020 research and innovation programme.
+.. _MyGEOSS: http://digitalearthlab.jrc.ec.europa.eu/mygeoss/
+
+.. image:: /img/mygeoss_logo.png
+
+.. image:: /img/euc_logo.png
+
