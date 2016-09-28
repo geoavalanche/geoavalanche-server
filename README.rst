@@ -396,3 +396,8 @@ Remove the container:
     docker rm $CONTAINER_ID
 
 Build the container again.
+
+# Credits
+
+This application has been developed within the [MyGEOSS](http://digitalearthlab.jrc.ec.europa.eu/mygeoss/) project, which has received funding from the European Union’s Horizon 2020 research and innovation programme.
+![MyGEOSS logo](http://geoavalanche.github.io/geoavalanche/img/mygeoss_logo.png) ![EU Commission logo](http://geoavalanche.github.io/geoavalanche/img/euc_logo.png)
