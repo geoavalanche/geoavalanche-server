@@ -1,5 +1,10 @@
 package org.geoavalanche.wps.ateinorm;
 
+import com.github.dexecutor.core.DefaultDexecutor;
+import com.github.dexecutor.core.DexecutorConfig;
+import com.github.dexecutor.core.ExecutionConfig;
+import com.github.dexecutor.core.support.ThreadPoolUtil;
+import com.github.dexecutor.core.task.Task;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
@@ -30,6 +35,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.geoserver.wps.sextante.GTOutputFactory;
@@ -276,10 +283,32 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
         GTRasterLayer rasterCLC = new GTRasterLayer();
         rasterCLC.create(lCLCCov);
         LOG.info("raster CLC = "+rasterCLC);
+
+        Map<String, Task<String, Boolean>> tasks = new HashMap<String, Task<String, Boolean>>() {
+            {
+                put(TaskSlope.NAME, new TaskSlope(rasterDEM,methodS,unitS,rasterDEM.getLayerGridExtent()));
+                put(TaskAspect.NAME, new TaskAspect(rasterDEM,methodA,unitA,rasterDEM.getLayerGridExtent()));
+                put(TaskCurvature.NAME, new TaskCurvature(rasterDEM,methodC,rasterDEM.getLayerGridExtent()));
+            }
+        };
         
-        IRasterLayer slope = getSlope(rasterDEM,methodS,unitS,rasterDEM.getLayerGridExtent());
-        IRasterLayer aspect = getAspect(rasterDEM,methodA,unitA,rasterDEM.getLayerGridExtent());
-        IRasterLayer curvature = getCurvature(rasterDEM,methodC,rasterDEM.getLayerGridExtent());
+        ExecutorService executorService = Executors.newFixedThreadPool(ThreadPoolUtil.ioIntesivePoolSize()); //newExecutor();
+        //ExecutionEngine<String, String> executionEngine = new DefaultExecutionEngine<>(executorService);
+
+        DexecutorConfig<String, Boolean> config = new DexecutorConfig<>(executorService, new TheTaskProvider(tasks));
+        DefaultDexecutor<String, Boolean> executor = new DefaultDexecutor<>(config);
+
+        //Building
+        executor.addIndependent(TaskAspect.NAME);
+        executor.addIndependent(TaskSlope.NAME);
+        executor.addIndependent(TaskCurvature.NAME);
+
+        //Execution
+        executor.execute(ExecutionConfig.TERMINATING);                
+        
+        IRasterLayer slope = ((TaskSlope)tasks.get(TaskSlope.NAME)).getSlope();
+        IRasterLayer aspect = ((TaskAspect)tasks.get(TaskAspect.NAME)).getAspect();
+        IRasterLayer curvature = ((TaskCurvature)tasks.get(TaskCurvature.NAME)).getCurvature();
         IRasterLayer landcover = (IRasterLayer) rasterCLC;
         
         double ateiMean = getATEIMean(slope,aspect,curvature,landcover,slope.getLayerGridExtent());
@@ -334,7 +363,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
      * @return a slope layer
      * @throws GeoAlgorithmExecutionException
      */
-    private static IRasterLayer getSlope(IRasterLayer dem, int method, int unit, AnalysisExtent ext)
+    public static IRasterLayer getSlope(IRasterLayer dem, int method, int unit, AnalysisExtent ext)
             throws GeoAlgorithmExecutionException {
 
         /*
@@ -402,7 +431,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
      * @return a aspect layer
      * @throws GeoAlgorithmExecutionException
      */
-    private static IRasterLayer getAspect(IRasterLayer dem, int method, int unit, AnalysisExtent ext) 
+    public static IRasterLayer getAspect(IRasterLayer dem, int method, int unit, AnalysisExtent ext) 
             throws GeoAlgorithmExecutionException {
         
         /*
@@ -470,7 +499,7 @@ public class ATEINorm extends StaticMethodsProcessFactory<ATEINorm> {
      * @return a curvature layer
      * @throws GeoAlgorithmExecutionException
      */
-    private static IRasterLayer getCurvature(IRasterLayer dem, String method, AnalysisExtent ext) 
+    public static IRasterLayer getCurvature(IRasterLayer dem, String method, AnalysisExtent ext) 
             throws GeoAlgorithmExecutionException {
         
         /*
