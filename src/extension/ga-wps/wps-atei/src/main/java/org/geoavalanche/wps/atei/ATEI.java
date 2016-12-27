@@ -113,7 +113,7 @@ public class ATEI extends StaticMethodsProcessFactory<ATEI> {
         //@TODO Do cropping and writing/reading to/from file concurrently
         
         // performing the crop of dem
-        final ParameterValueGroup demParam = PROCESSOR.getOperation("CoverageCrop").getParameters();
+        ParameterValueGroup demParam = PROCESSOR.getOperation("CoverageCrop").getParameters();
         demParam.parameter("Source").setValue(dem);
         demParam.parameter("Envelope").setValue(bounds);
         demParam.parameter("ROI").setValue(roi);
@@ -122,7 +122,7 @@ public class ATEI extends StaticMethodsProcessFactory<ATEI> {
         LOG.info("cropped DEM coverage="+croppedDEM);
         
         // performing the crop of clc
-        final ParameterValueGroup clcParam = PROCESSOR.getOperation("CoverageCrop").getParameters();
+        ParameterValueGroup clcParam = PROCESSOR.getOperation("CoverageCrop").getParameters();
         clcParam.parameter("Source").setValue(clc);
         clcParam.parameter("Envelope").setValue(bounds);
         clcParam.parameter("ROI").setValue(roi);
@@ -139,26 +139,18 @@ public class ATEI extends StaticMethodsProcessFactory<ATEI> {
         //LOG.info("writedir exists? "+writedir.isDirectory());
         //if (!writedir.exists()) {
         if (!Files.exists(writedir)) {
-        
-            //writedir.mkdirs();
-            try {
-                Files.createDirectories(writedir);
-            } catch (IOException e) {
-                //fail to create directory
-                e.printStackTrace();
-            }
-            
+            Files.createDirectories(writedir);
         }
         
         
         String cropDemFileName = new StringBuilder(writedir.toAbsolutePath().toString()).append(File.separatorChar).append(croppedDEM.getName().toString()).append("dem_"+UUID.randomUUID().toString()+".tiff").toString();
         LOG.info("crop DEM filename="+cropDemFileName);
-        final File writeDEMFile = new File(cropDemFileName);
+        File writeDEMFile = new File(cropDemFileName);
         LOG.info("write DEM file="+writeDEMFile.toString());
         
         String cropClcFileName = new StringBuilder(writedir.toAbsolutePath().toString()).append(File.separatorChar).append(croppedCLC.getName().toString()).append("clc_"+UUID.randomUUID().toString()+".tiff").toString();
         LOG.info("crop CLC filename="+cropClcFileName);
-        final File writeCLCFile = new File(cropClcFileName);
+        File writeCLCFile = new File(cropClcFileName);
         LOG.info("write CLC file="+writeCLCFile.toString());
         
         //write to filesystem

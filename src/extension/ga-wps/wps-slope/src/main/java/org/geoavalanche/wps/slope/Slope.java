@@ -94,7 +94,7 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
         }
         
         // perform the crops
-        final ParameterValueGroup param = PROCESSOR.getOperation("CoverageCrop").getParameters();
+        ParameterValueGroup param = PROCESSOR.getOperation("CoverageCrop").getParameters();
         param.parameter("Source").setValue(dem);
         param.parameter("Envelope").setValue(bounds);
         param.parameter("ROI").setValue(roi);
@@ -113,15 +113,7 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
         //LOG.info("writedir exists? "+writedir.isDirectory());
         //if (!writedir.exists()) {
         if (!Files.exists(writedir)) {
-        
-            //writedir.mkdirs();
-            try {
-                Files.createDirectories(writedir);
-            } catch (IOException e) {
-                //fail to create directory
-                e.printStackTrace();
-            }
-            
+            Files.createDirectories(writedir);
         }
         //final GeoTiffFormat format = new GeoTiffFormat();
         
@@ -138,7 +130,7 @@ public class Slope extends StaticMethodsProcessFactory<Slope> {
         //String cropFileName = new StringBuilder(writedir.getAbsolutePath()).append(File.separatorChar).append(cropped.getName().toString()).append(".tiff").toString();
         String cropFileName = new StringBuilder(writedir.toAbsolutePath().toString()).append(File.separatorChar).append(cropped.getName().toString()).append(".tiff").toString();
         LOG.info("crop filename="+cropFileName);
-        final File writeFile = new File(cropFileName);
+        File writeFile = new File(cropFileName);
         LOG.info("write file="+writeFile.toString());
         //final GridCoverageWriter writer = format.getWriter(writeFile, new Hints(Hints.CRS, cropped.getCoordinateReferenceSystem()));
         
