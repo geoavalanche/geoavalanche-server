@@ -313,15 +313,15 @@ public class SnowPack extends StaticMethodsProcessFactory<SnowPack> {
     static void save(GridCoverage2D sourceCoverage, String filename) throws Exception {
         FileOutputStream output = new FileOutputStream(LOCAL_REPOSITORY + "crop_"+filename);
         
-        final GeoTiffFormat format = new GeoTiffFormat();
-        final GeoTiffWriteParams wp = new GeoTiffWriteParams();
+        GeoTiffFormat format = new GeoTiffFormat();
+        GeoTiffWriteParams wp = new GeoTiffWriteParams();
         wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
         wp.setCompressionType("LZW");
         wp.setCompressionQuality(1.0F);
         //wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
         //wp.setTiling(256, 256);
 
-        final ParameterValueGroup writerParams = format.getWriteParameters();
+        ParameterValueGroup writerParams = format.getWriteParameters();
         writerParams.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
 
         GridCoverageWriter writer = format.getWriter(output);
