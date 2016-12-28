@@ -17,9 +17,9 @@
 
     <properties>
         <geoavalanche.version>${project.version}</geoavalanche.version>
-        <geoserver.version>2.9-SNAPSHOT</geoserver.version>
-        <geotools.version>15-SNAPSHOT</geotools.version>
-        <geowebcache.version>1.9-SNAPSHOT</geowebcache.version>
+        <geoserver.version>2.10-SNAPSHOT</geoserver.version>
+        <geotools.version>16-SNAPSHOT</geotools.version>
+        <geowebcache.version>1.10-SNAPSHOT</geowebcache.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.resources.sourceEncoding>${project.build.sourceEncoding}</project.resources.sourceEncoding>
     </properties>
