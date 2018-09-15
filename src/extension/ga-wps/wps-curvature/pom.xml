@@ -2,26 +2,37 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
-  
+
     <parent>
         <groupId>org.geoavalanche.extension</groupId>
         <artifactId>ga-wps</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.1-SNAPSHOT</version>
     </parent>
-  
+
     <groupId>org.geoavalanche.extension</groupId>
     <artifactId>wps-curvature</artifactId>
     <packaging>jar</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
     <name>wps-curvature</name>
-  
+
     <url>http://maven.apache.org</url>
-  
+
     <properties>
         <sextante.version>1.0</sextante.version>
     </properties>
-  
+
     <repositories>
+        <repository>
+            <id>geosolutions</id>
+            <name>geosolutions repository</name>
+            <url>http://maven.geo-solutions.it/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
         <repository>
             <id>Main 52north releases repo</id>
             <url>http://52north.org/maven/repo/releases/</url>
@@ -40,7 +51,7 @@
             <url>http://repo.boundlessgeo.com/main</url>
         </repository>
     </repositories>
-  
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -124,5 +135,5 @@
             <type>jar</type>
         </dependency>
     </dependencies>
-  
+
 </project>

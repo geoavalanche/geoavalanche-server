@@ -2,21 +2,21 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
-  
+
     <parent>
         <groupId>org.geoavalanche.extension</groupId>
         <artifactId>ga-wps</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.1-SNAPSHOT</version>
     </parent>
-  
+
     <groupId>org.geoavalanche.extension</groupId>
     <artifactId>wps-snowpack</artifactId>
     <packaging>jar</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
     <name>wps-snowpack</name>
 
     <url>http://geoavalanche.org</url>
-  
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -34,23 +34,23 @@
             <groupId>org.geotools</groupId>
             <artifactId>gt-process-geometry</artifactId>
             <version>${geotools.version}</version>
-        </dependency>      
+        </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-geotiff</artifactId>
             <version>${geotools.version}</version>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-referencing</artifactId>
             <version>${geotools.version}</version>
-        </dependency>   
+        </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-epsg-hsql</artifactId>
             <version>${geotools.version}</version>
-        </dependency>         
-      
+        </dependency>
+
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
@@ -61,7 +61,7 @@
             <artifactId>httpmime</artifactId>
             <version>4.2.5</version>
         </dependency>
-              
+
     </dependencies>
-  
+
 </project>
