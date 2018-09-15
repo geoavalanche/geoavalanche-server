@@ -4,7 +4,7 @@
     <groupId>org.geoavalanche</groupId>
     <artifactId>geoavalanche-server</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
 
     <name>geoavalanche-server</name>
 
@@ -12,18 +12,18 @@
         <module>extension</module>
         <module>main</module>
     </modules>
-  
+
     <url>http://geoavalanche.org</url>
 
     <properties>
         <geoavalanche.version>${project.version}</geoavalanche.version>
-        <geoserver.version>2.10-SNAPSHOT</geoserver.version>
-        <geotools.version>16-SNAPSHOT</geotools.version>
-        <geowebcache.version>1.10-SNAPSHOT</geowebcache.version>
+        <geoserver.version>2.13-SNAPSHOT</geoserver.version>
+        <geotools.version>19-SNAPSHOT</geotools.version>
+        <geowebcache.version>1.13-SNAPSHOT</geowebcache.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.resources.sourceEncoding>${project.build.sourceEncoding}</project.resources.sourceEncoding>
     </properties>
-  
+
     <dependencyManagement>
         <dependencies>
 
@@ -132,7 +132,7 @@
                 <enabled>true</enabled>
             </releases>
         </repository>
-   
+
         <repository>
             <id>osgeo</id>
             <name>Open Source Geospatial Foundation Repository</name>
