@@ -60,7 +60,7 @@
       <artifactId>alg-avalanche</artifactId>
       <version>${geoavalanche.version}</version>
     </dependency>
-    
+
     <!-- GEOSERVER -->
     <dependency>
       <groupId>org.geoserver.web</groupId>
@@ -187,15 +187,15 @@
       <artifactId>gs-sec-ldap</artifactId>
       <version>${geoserver.version}</version>
     </dependency>
-     <dependency>
-        <groupId>org.geotools.xsd</groupId>
-        <artifactId>gt-xsd-wcs</artifactId>
-        <version>${geotools.version}</version>
+    <dependency>
+      <groupId>org.geotools.xsd</groupId>
+      <artifactId>gt-xsd-wcs</artifactId>
+      <version>${geotools.version}</version>
     </dependency>
     <dependency>
-         <groupId>org.geotools.ogc</groupId>
-         <artifactId>net.opengis.wcs</artifactId>
-         <version>${geotools.version}</version>
+      <groupId>org.geotools.ogc</groupId>
+      <artifactId>net.opengis.wcs</artifactId>
+      <version>${geotools.version}</version>
     </dependency>
     <dependency>
       <groupId>org.geotools.jdbc</groupId>
@@ -239,6 +239,16 @@
       <version>${geoserver.version}</version>
       <scope>runtime</scope>
     </dependency>
+    <dependency>
+      <groupId>org.geoserver.extension</groupId>
+      <artifactId>gs-inspire</artifactId>
+      <version>${geoserver.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-app-schema</artifactId>
+      <version>${geotools.version}</version>
+    </dependency>
     <!-- <dependency>
       <groupId>net.sourceforge.jtds</groupId>
       <artifactId>jtds</artifactId>
@@ -256,12 +266,12 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
+
   <build>
 
     <!-- <resources>
       <resource>
-          
+
       </resource>
     </resources> -->
 

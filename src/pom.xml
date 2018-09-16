@@ -118,6 +118,7 @@
     </build>
 
     <repositories>
+
         <repository>
             <id>boundless</id>
             <name>Boundless Maven Repository</name>
@@ -125,6 +126,18 @@
             <!-- contains snapshot and release (including third-party-dependences)               -->
             <!-- Restlet maven Repository (http://maven.restlet.org)                             -->
             <!-- ucar (https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases) -->
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+
+        <repository>
+            <id>geosolutions</id>
+            <name>geosolutions repository</name>
+            <url>http://maven.geo-solutions.it/</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -149,17 +162,6 @@
             </snapshots>
         </repository>
 
-        <repository>
-            <id>geosolutions</id>
-            <name>geosolutions repository</name>
-            <url>http://maven.geo-solutions.it/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
     </repositories>
 
 </project>
