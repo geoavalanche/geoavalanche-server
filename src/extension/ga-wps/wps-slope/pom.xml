@@ -47,7 +47,7 @@
             </snapshots>
             <id>boundless</id>
             <name>Boundless Maven Repository</name>
-            <url>http://repo.boundlessgeo.com/main</url>
+            <url>https://repo.boundlessgeo.com/main/</url>
         </repository>
     </repositories>
 
@@ -92,7 +92,7 @@
             <artifactId>libMath</artifactId>
             <version>${sextante.version}</version>
         </dependency>
-      
+
         <!-- Sextante supplemental dependencies -->
         <dependency>
             <groupId>gov.nist.math</groupId>
@@ -114,13 +114,13 @@
             <artifactId>bsh</artifactId>
             <version>2.0b4</version>
         </dependency>
-    
+
         <!-- <dependency>
-          <groupId>org.geobricks</groupId>
-          <artifactId>GeoBricks</artifactId>
-          <version>0.1</version>
+            <groupId>org.geobricks</groupId>
+            <artifactId>GeoBricks</artifactId>
+            <version>0.1</version>
         </dependency> -->
-        
+
         <!-- <dependency>
             <groupId>org.geoserver.extension</groupId>
             <artifactId>gs-wps-core</artifactId>
